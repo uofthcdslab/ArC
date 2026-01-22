@@ -4,8 +4,8 @@ import numpy as np
 from pathlib import Path
 import json
 
-def load_haf_results(model_name, data_name, results_path="haf_results"):
-    """Load all HAF results for a specific model and dataset"""
+def load_arc_results(model_name, data_name, results_path="arc_results"):
+    """Load all ArC results for a specific model and dataset"""
     
     # Get the model short name (e.g., "Llama-3.1-8B-Instruct" from "meta-llama/Llama-3.1-8B-Instruct")
     model_short = model_name.split('/')[-1] if '/' in model_name else model_name
@@ -35,8 +35,8 @@ def load_haf_results(model_name, data_name, results_path="haf_results"):
     
     return results
 
-def summarize_haf_metrics(results):
-    """Summarize HAF metrics across all samples"""
+def summarize_arc_metrics(results):
+    """Summarize ArC metrics across all samples"""
     
     if not results:
         print("ERROR: No results to summarize")
@@ -100,7 +100,7 @@ def summarize_haf_metrics(results):
     
     # Calculate summary statistics
     print("\n" + "="*80)
-    print("HAF METRICS SUMMARY")
+    print("ArC METRICS SUMMARY")
     print("="*80)
     
     print("\nRELEVANCE DIMENSION:")
@@ -199,21 +199,21 @@ def view_sample_detail(results, sample_idx):
 if __name__ == "__main__":
     import argparse
     
-    parser = argparse.ArgumentParser(description="View HAF computation results")
+    parser = argparse.ArgumentParser(description="View ArC computation results")
     parser.add_argument("--model_name", type=str, default="Llama-3.1-8B-Instruct", 
                        help="Model name (short form like 'Llama-3.1-8B-Instruct')")
     parser.add_argument("--data_name", type=str, default="civil_comments",
                        help="Dataset name")
     parser.add_argument("--sample_idx", type=int, default=None,
                        help="View specific sample details")
-    parser.add_argument("--results_path", type=str, default="haf_results",
+    parser.add_argument("--results_path", type=str, default="arc_results",
                        help="Path to results directory")
     
     args = parser.parse_args()
     
     # Load results
     print(f"\nLoading results for {args.model_name} on {args.data_name}...")
-    results = load_haf_results(args.model_name, args.data_name, args.results_path)
+    results = load_arc_results(args.model_name, args.data_name, args.results_path)
     
     if results:
         if args.sample_idx is not None:
@@ -221,7 +221,7 @@ if __name__ == "__main__":
             view_sample_detail(results, args.sample_idx)
         else:
             # View summary
-            summary = summarize_haf_metrics(results)
+            summary = summarize_arc_metrics(results)
     else:
         print("\nAvailable models and datasets:")
         results_path = Path(args.results_path)

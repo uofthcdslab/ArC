@@ -1,4 +1,4 @@
-"""HAF Models Module"""
-from .haf_config import HAFConfig
+"""ArC Models Module"""
+from .arc_config import ArCConfig
 
-__all__ = ['HAFConfig']
+__all__ = ['ArCConfig']

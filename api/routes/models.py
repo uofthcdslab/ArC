@@ -38,7 +38,7 @@ async def get_model_info(model_name: str):
         model_short = model_name.split('/')[-1] if '/' in model_name else model_name
         
         # Check available datasets for this model
-        results_path = Path("haf_results") / model_short
+        results_path = Path("arc_results") / model_short
         available_datasets = []
         
         if results_path.exists():
@@ -59,7 +59,7 @@ async def get_model_info(model_name: str):
 async def get_dataset_info(data_name: str):
     """Get information about a specific dataset"""
     try:
-        results_path = Path("haf_results")
+        results_path = Path("arc_results")
         available_models = []
         sample_count = None
         

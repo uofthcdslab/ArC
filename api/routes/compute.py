@@ -2,8 +2,8 @@
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from api.schemas.requests import ComputeRequest
 from api.schemas.responses import ComputeResponse
-from core.models.haf_config import HAFConfig
-from services.haf_service import HAFService
+from core.models.arc_config import ArCConfig
+from services.arc_service import ArCService
 from utils import helpers as hp
 from pathlib import Path
 import pickle
@@ -13,12 +13,12 @@ router = APIRouter()
 
 def save_sample_results(results, sample_ix, model_name, data_name, explicit_prompting):
     """Save sample results to file"""
-    from utils.data_path_prefixes import HAF_RESULTS_PATH
+    from utils.data_path_prefixes import ARC_RESULTS_PATH
     
     if explicit_prompting == '':
-        directory_path = Path(HAF_RESULTS_PATH + "_naive" + "/" + model_name.split('/')[1] + '/' + data_name + '/')
+        directory_path = Path(ARC_RESULTS_PATH + "_naive" + "/" + model_name.split('/')[1] + '/' + data_name + '/')
     else:
-        directory_path = Path(HAF_RESULTS_PATH + "/" + model_name.split('/')[1] + '/' + data_name + '/')
+        directory_path = Path(ARC_RESULTS_PATH + "/" + model_name.split('/')[1] + '/' + data_name + '/')
     
     directory_path.mkdir(parents=True, exist_ok=True)
     file_path = directory_path / (str(sample_ix) + '.pkl')
@@ -27,9 +27,9 @@ def save_sample_results(results, sample_ix, model_name, data_name, explicit_prom
         pickle.dump(results, f)
 
 
-def compute_haf_for_model_dataset(model_name: str, data_name: str, config: HAFConfig):
-    """Compute HAF metrics for a specific model and dataset"""
-    service = HAFService(config)
+def compute_arc_for_model_dataset(model_name: str, data_name: str, config: ArCConfig):
+    """Compute ArC metrics for a specific model and dataset"""
+    service = ArCService(config)
     
     # Load output tokens and parsed outputs
     output_tokens_dict = hp.get_output_tokens(model_name, data_name, config.explicit_prompting)
@@ -58,12 +58,12 @@ def compute_haf_for_model_dataset(model_name: str, data_name: str, config: HAFCo
 @router.post("/single", response_model=ComputeResponse)
 async def compute_single(request: ComputeRequest, background_tasks: BackgroundTasks):
     """
-    Compute HAF metrics for a single model/dataset combination
+    Compute ArC metrics for a single model/dataset combination
     This runs in the background
     """
     try:
         # Create configuration
-        config = HAFConfig(
+        config = ArCConfig(
             explicit_prompting='_explicit' if request.config.explicit_prompting else '',
             use_scores=request.config.use_scores,
             similarity_model=request.config.similarity_model
@@ -71,7 +71,7 @@ async def compute_single(request: ComputeRequest, background_tasks: BackgroundTa
         
         # Add computation to background tasks
         background_tasks.add_task(
-            compute_haf_for_model_dataset,
+            compute_arc_for_model_dataset,
             request.model_name,
             request.data_name,
             config
@@ -92,7 +92,7 @@ async def compute_all(background_tasks: BackgroundTasks,
                      use_scores: bool = False,
                      similarity_model: str = "cross-encoder/stsb-distilroberta-base"):
     """
-    Compute HAF metrics for all model/dataset combinations
+    Compute ArC metrics for all model/dataset combinations
     This runs in the background
     """
     try:
@@ -108,7 +108,7 @@ async def compute_all(background_tasks: BackgroundTasks,
         model_names = list(model_size.keys())
         
         # Create configuration
-        config = HAFConfig(
+        config = ArCConfig(
             explicit_prompting='_explicit' if explicit_prompting else '',
             use_scores=use_scores,
             similarity_model=similarity_model
@@ -118,7 +118,7 @@ async def compute_all(background_tasks: BackgroundTasks,
         for data_name in data_names:
             for model_name in model_names:
                 background_tasks.add_task(
-                    compute_haf_for_model_dataset,
+                    compute_arc_for_model_dataset,
                     model_name,
                     data_name,
                     config

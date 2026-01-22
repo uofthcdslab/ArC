@@ -1,15 +1,15 @@
 
-Human-Aligned Faithfulness in Toxicity Explanations of LLMs
+Argument-based Consistency in Toxicity Explanations of LLMs
 ===========================================================
 
-.. image:: https://github.com/uofthcdslab/HAF/blob/main/utils/haf_intro.png
+.. image:: https://github.com/uofthcdslab/ArC/blob/main/utils/ArC_intro.png
   :align: center
   :width: 400px
 
-The discourse around toxicity and LLMs in NLP largely revolves around detection tasks. This work shifts the focus to evaluating LLMs' *reasoning* about toxicity---from their explanations that justify a stance---to enhance their trustworthiness in downstream tasks. In our recent `paper <https://arxiv.org/pdf/2506.19113>`_, we propose a novel, theoretically-grounded multi-dimensional criterion, **Human-Aligned Faithfulness (HAF)**, that measures how LLMs' free-form toxicity explanations reflect those of a rational human under ideal conditions.
-We develop six metrics, based on uncertainty quantification, to comprehensively evaluate HAF of LLMs' toxicity explanations with no human involvement, and highlight how “non-ideal” the explanations are. This repository contains the code and sample data to reproduce our results. 
+The discourse around toxicity and LLMs in NLP largely revolves around detection tasks. This work shifts the focus to evaluating LLMs' *reasoning* about toxicity---from their explanations that justify a stance---to enhance their trustworthiness in downstream tasks. In our recent `paper <https://arxiv.org/pdf/2506.19113>`_, we propose a novel, theoretically-grounded multi-dimensional criterion, **Argument-based Consistency (ArC)**, that measures how LLMs' free-form toxicity explanations reflect those of a rational human under ideal conditions.
+We develop six metrics, based on uncertainty quantification, to comprehensively evaluate ArC of LLMs' toxicity explanations with no human involvement, and highlight how “non-ideal” the explanations are. This repository contains the code and sample data to reproduce our results. 
 
-The complete LLM-generated toxicity explanations and our HAF scores are available on `Hugging Face <https://huggingface.co/collections/uofthcdslab/haf-6857895ac09959da821bd015>`_. The complete LLM output tokens and entropy scores are available upon request.
+The complete LLM-generated toxicity explanations and our ArC scores are available on `Hugging Face <https://huggingface.co/collections/uofthcdslab/ArC-6857895ac09959da821bd015>`_. The complete LLM output tokens and entropy scores are available upon request.
 
 
 Requirements:
@@ -21,11 +21,11 @@ Requirements:
 Quick Start:
 ============
 
-**1. Compute HAF Metrics:**
+**1. Compute ArC Metrics:**
 
-``python haf.py --explicit_prompting True --use_scores False``
+``python ArC.py --explicit_prompting True --use_scores False``
 
-This computes HAF metrics for all models and datasets, storing results in ``haf_results/``
+This computes ArC metrics for all models and datasets, storing results in ``ArC_results/``
 
 **2. View Results (Command Line):**
 
@@ -49,7 +49,7 @@ In a separate terminal:
 
 UI available at: http://localhost:7860
 
-The Gradio interface provides interactive exploration of HAF metrics with visualization and model comparison features.
+The Gradio interface provides interactive exploration of ArC metrics with visualization and model comparison features.
 
 
 Pipeline:
@@ -58,11 +58,11 @@ Pipeline:
 Quick Demo (with sample data):
 ------------------------------
 
-The required sample input data to run the demo is included in `llm_generated_data/ <https://github.com/uofthcdslab/HAF/tree/main/llm_generated_data>`_ and `parsed_data/ <https://github.com/uofthcdslab/HAF/tree/main/parsed_data>`_ directories. To compute HAF metrics on this sample data, run:
+The required sample input data to run the demo is included in `llm_generated_data/ <https://github.com/uofthcdslab/ArC/tree/main/llm_generated_data>`_ and `parsed_data/ <https://github.com/uofthcdslab/ArC/tree/main/parsed_data>`_ directories. To compute ArC metrics on this sample data, run:
 
-``python haf.py``
+``python ArC.py``
 
-This will compute the HAF metrics for the sample data and store the results in `haf_results/ <https://github.com/uofthcdslab/HAF/tree/main/haf_results>`_ directory. The results include HAF scores for different models and datasets.
+This will compute the ArC metrics for the sample data and store the results in `ArC_results/ <https://github.com/uofthcdslab/ArC/tree/main/ArC_results>`_ directory. The results include ArC scores for different models and datasets.
 
 **Modular Architecture:**
 
@@ -71,7 +71,7 @@ The codebase uses a modular architecture that separates concerns and makes the c
 - ``core/metrics/``: Individual metric implementations (SoS, DiS, UII, UEI, RS, RN)
 - ``core/processors/``: Confidence and similarity computation processors
 - ``core/models/``: Configuration and data models
-- ``services/``: High-level HAF computation service
+- ``services/``: High-level ArC computation service
 
 This modular design makes it easier to extend, test, and maintain the codebase.
 
@@ -81,14 +81,14 @@ Reproducing Full Pipeline:
 
 **Using an existing or a new dataset:**
 
-1. Add the dataset name and path in `utils/data_path_map.json <https://github.com/uofthcdslab/HAF/blob/main/utils/data_path_map.json>`_.
-2. Include the main processing function for the dataset in `utils/data_processor.py <https://github.com/uofthcdslab/HAF/blob/main/utils/data_processor.py>`_ and give it the exact same name as the dataset.
-3. Access shared parameters and methods defined in the `DataLoader <https://github.com/uofthcdslab/HAF/blob/main/data_loader.py#L8>`_ class in `data_loader.py <https://github.com/uofthcdslab/HAF/blob/main/data_loader>`_ through instance references.
+1. Add the dataset name and path in `utils/data_path_map.json <https://github.com/uofthcdslab/ArC/blob/main/utils/data_path_map.json>`_.
+2. Include the main processing function for the dataset in `utils/data_processor.py <https://github.com/uofthcdslab/ArC/blob/main/utils/data_processor.py>`_ and give it the exact same name as the dataset.
+3. Access shared parameters and methods defined in the `DataLoader <https://github.com/uofthcdslab/ArC/blob/main/data_loader.py#L8>`_ class in `data_loader.py <https://github.com/uofthcdslab/ArC/blob/main/data_loader>`_ through instance references.
 
 
 **LLM explanation generation and parsing:**
 
-In the paper, we describe a three-stage pipeline to compute **HAF** metrics. The pipeline consists of:
+In the paper, we describe a three-stage pipeline to compute **ArC** metrics. The pipeline consists of:
 
 1. Stage **JUSTIFY** where LLMs generate explanations for their toxicity decisions (denoted by ``stage="initial"``).
 2. Stage **UPHOLD-REASON** where LLMs generate post-hoc explanations to assess the sufficiency of reasons provided in the **JUSTIFY** stage (denoted by ``stage="internal"`` or ``stage="external"``).
@@ -96,34 +96,34 @@ In the paper, we describe a three-stage pipeline to compute **HAF** metrics. The
 
 To implement this, repeat the following steps with each of the four values for the parameter ``stage``: ``initial``, ``internal``, ``external``, and ``individual`` (only the ``initial`` stage has to be run first; the rest can be run in any order):
 
-1. Run `generate.py <https://github.com/uofthcdslab/HAF/blob/main/generate.py>`_ with ``--generation_stage=initial/internal/external/individual`` and other optional changes to the generation hyperparameters. 
+1. Run `generate.py <https://github.com/uofthcdslab/ArC/blob/main/generate.py>`_ with ``--generation_stage=initial/internal/external/individual`` and other optional changes to the generation hyperparameters. 
 2. LLM outputs (tokens, token entropies, and texts) will be generated and stored in ``llm_generated_data/<model_name>/<data_name>/<stage>``. 
-3. Run `parse.py <https://github.com/uofthcdslab/HAF/blob/main/parse.py>`_ with ``stage=initial/internal/external/individual`` and other optional parameters to extract LLM decisions, reasons, and other relevant information for computing HAF.
+3. Run `parse.py <https://github.com/uofthcdslab/ArC/blob/main/parse.py>`_ with ``stage=initial/internal/external/individual`` and other optional parameters to extract LLM decisions, reasons, and other relevant information for computing ArC.
 4. The parsed outputs will be stored in ``parsed_data/<model_name>/<data_name>/<stage>``.
 
 
-**Computing HAF metrics:**
+**Computing ArC metrics:**
 
-1. Run `haf.py <https://github.com/uofthcdslab/HAF/blob/main/haf.py>`_ with optional parameters to compute HAF metrics for all combinations of models and datasets.
+1. Run `ArC.py <https://github.com/uofthcdslab/ArC/blob/main/ArC.py>`_ with optional parameters to compute ArC metrics for all combinations of models and datasets.
 
 Supported parameters:
 - ``--explicit_prompting``: Use explicit prompting (True/False, default: True)
 - ``--use_scores``: Use entropy of scores instead of logits (True/False, default: False)
 - ``--similarity_model``: Semantic similarity model name (default: cross-encoder/stsb-distilroberta-base)
 
-2. The outputs will be computed for each sample instance and stored in ``haf_results/<model_name>/<data_name>/<sample_index>.pkl``.
+2. The outputs will be computed for each sample instance and stored in ``ArC_results/<model_name>/<data_name>/<sample_index>.pkl``.
 
 
 Viewing Results:
 ----------------
 
-After computing HAF metrics, use `view_results.py <https://github.com/uofthcdslab/HAF/blob/main/view_results.py>`_ to analyze and summarize the results:
+After computing ArC metrics, use `view_results.py <https://github.com/uofthcdslab/ArC/blob/main/view_results.py>`_ to analyze and summarize the results:
 
 **View summary statistics for all samples:**
 
 ``python view_results.py --model_name Llama-3.1-8B-Instruct --data_name civil_comments``
 
-This displays aggregated statistics (mean, std, min, max) for all HAF metrics:
+This displays aggregated statistics (mean, std, min, max) for all ArC metrics:
 
 - **Relevance Dimension:** SoS (Sufficiency of Stance), DiS-DPP, DiS-Avg (Diversity of Stance)
 - **Internal Reliance Dimension:** UII (Uncertainty in Internal Informativeness), Internal Δ-PE
@@ -146,7 +146,7 @@ This will show all computed models and datasets with their sample counts.
 - ``--model_name``: Model name (e.g., Llama-3.1-8B-Instruct, Llama-3.2-3B-Instruct, Llama-3.3-70B-Instruct, Ministral-8B-Instruct-2410)
 - ``--data_name``: Dataset name (e.g., civil_comments, hate_explain, implicit_toxicity, real_toxicity_prompts, toxigen)
 - ``--sample_idx``: Specific sample index to view detailed results (optional)
-- ``--results_path``: Path to results directory (default: haf_results)
+- ``--results_path``: Path to results directory (default: ArC_results)
 
 
 Roadmap:
@@ -158,7 +158,7 @@ Roadmap:
 API and UI:
 ===========
 
-The project now includes a FastAPI backend and Gradio UI for interactive exploration of HAF metrics.
+The project now includes a FastAPI backend and Gradio UI for interactive exploration of ArC metrics.
 
 **Installation:**
 
@@ -193,18 +193,18 @@ Once the server is running, visit:
 - ``GET /api/v1/results/summary/{model_name}/{data_name}`` - Get summary statistics
 - ``GET /api/v1/results/sample/{model_name}/{data_name}/{sample_idx}`` - Get specific sample results
 - ``GET /api/v1/results/compare`` - Compare multiple models
-- ``POST /api/v1/compute/single`` - Compute HAF metrics for a model/dataset
-- ``POST /api/v1/compute/all`` - Compute HAF metrics for all combinations
+- ``POST /api/v1/compute/single`` - Compute ArC metrics for a model/dataset
+- ``POST /api/v1/compute/all`` - Compute ArC metrics for all combinations
 
 **Gradio UI Features:**
 
-- **View Results**: Browse HAF metrics for any model/dataset combination
+- **View Results**: Browse ArC metrics for any model/dataset combination
 - **Compare Models**: Side-by-side comparison with radar charts
 - **Run Pipeline**: Execute the full pipeline (generate → parse → compute) from the UI
 - **Configuration**: Manage all configuration files:
   - Model size configuration (utils/model_size_map.json)
   - Dataset paths (utils/data_path_map.json)
-  - HAF hyperparameters (utils/haf_hyperparams.py)
+  - ArC hyperparameters (utils/ArC_hyperparams.py)
   - Prompt instructions (utils/prompt_instructions.json)
   - Data path prefixes (utils/data_path_prefixes.py)
 
@@ -218,7 +218,7 @@ Once the server is running, visit:
 
 - ``GET/PUT /api/v1/config/models`` - Manage model configuration
 - ``GET/PUT /api/v1/config/datasets`` - Manage dataset configuration
-- ``GET/PUT /api/v1/config/hyperparams`` - Manage HAF hyperparameters
+- ``GET/PUT /api/v1/config/hyperparams`` - Manage ArC hyperparameters
 - ``GET/PUT /api/v1/config/prompts`` - Manage prompt instructions
 - ``GET/PUT /api/v1/config/paths`` - Manage data path prefixes
 
@@ -227,9 +227,10 @@ Citing:
 =======
 Bibtex::
 
-	@article{mothilal2025haf,
-	  title={Human-Aligned Faithfulness in Toxicity Explanations of LLMs},
+	@article{mothilal2025ArC,
+	  title={Argument-based Consistency in Toxicity Explanations of LLMs},
 	  author={K Mothilal, Ramaravind and Roy, Joanna and Ahmed, Syed Ishtiaque and Guha, Shion},
 	  journal={arXiv preprint arXiv:2506.19113},
 	  year={2025}
 	}
+

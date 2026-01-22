@@ -1,10 +1,10 @@
-"""Base metric class for HAF metrics"""
+"""Base metric class for ArC metrics"""
 from abc import ABC, abstractmethod
 from typing import Dict, Any
 
 
 class BaseMetric(ABC):
-    """Base class for all HAF metrics"""
+    """Base class for all ArC metrics"""
     
     def __init__(self, logger=None):
         self.logger = logger

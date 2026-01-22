@@ -1,11 +1,11 @@
-"""HAF Configuration dataclass"""
+"""ArC (Argument-based Consistency) Configuration dataclass"""
 from dataclasses import dataclass
 from typing import Optional
 
 
 @dataclass
-class HAFConfig:
-    """Configuration for HAF computation"""
+class ArCConfig:
+    """Configuration for ArC computation"""
     
     explicit_prompting: str = '_explicit'
     use_scores: bool = False
@@ -29,7 +29,7 @@ class HAFConfig:
             similarity_model: Name of similarity model
             
         Returns:
-            HAFConfig instance
+            ArCConfig instance
         """
         explicit_str = '_explicit' if explicit_prompting else ''
         return cls(

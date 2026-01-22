@@ -1,4 +1,4 @@
-"""HAF Services Module"""
-from .haf_service import HAFService
+"""ArC Services Module"""
+from .arc_service import ArCService
 
-__all__ = ['HAFService']
+__all__ = ['ArCService']

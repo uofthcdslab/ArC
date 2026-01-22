@@ -139,20 +139,20 @@ async def run_full_pipeline(request: PipelineRequest, background_tasks: Backgrou
                 if not parse_result["success"]:
                     break
             
-            # Compute HAF metrics
-            from core.models.haf_config import HAFConfig
-            from services.haf_service import HAFService
+            # Compute ArC metrics
+            from core.models.arc_config import ArCConfig
+            from services.arc_service import ArCService
             from utils import helpers as hp
             from pathlib import Path
             import pickle
             
-            config = HAFConfig(
+            config = ArCConfig(
                 explicit_prompting='_explicit' if request.explicit_prompting else '',
                 use_scores=False,
                 similarity_model="cross-encoder/stsb-distilroberta-base"
             )
             
-            service = HAFService(config)
+            service = ArCService(config)
             output_tokens_dict = hp.get_output_tokens(request.model_name, request.data_name, config.explicit_prompting)
             parsed_output_dict = hp.get_parsed_outputs(request.model_name, request.data_name, config.explicit_prompting)
             
@@ -163,15 +163,15 @@ async def run_full_pipeline(request: PipelineRequest, background_tasks: Backgrou
                 )
                 
                 # Save results
-                from utils.data_path_prefixes import HAF_RESULTS_PATH
+                from utils.data_path_prefixes import ARC_RESULTS_PATH
                 model_short = request.model_name.split('/')[-1]
-                directory_path = Path(HAF_RESULTS_PATH) / model_short / request.data_name
+                directory_path = Path(ARC_RESULTS_PATH) / model_short / request.data_name
                 directory_path.mkdir(parents=True, exist_ok=True)
                 
                 with open(directory_path / f"{sample_ix}.pkl", "wb") as f:
                     pickle.dump(sample_result, f)
             
-            results.append({"stage": "compute", "step": "haf", "result": {"success": True}})
+            results.append({"stage": "compute", "step": "arc", "result": {"success": True}})
             
             return results
         

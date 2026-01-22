@@ -12,7 +12,7 @@ router = APIRouter()
 def load_sample_result(model_name: str, data_name: str, sample_idx: int):
     """Load a single sample result"""
     model_short = model_name.split('/')[-1] if '/' in model_name else model_name
-    file_path = Path("haf_results") / model_short / data_name / f"{sample_idx}.pkl"
+    file_path = Path("arc_results") / model_short / data_name / f"{sample_idx}.pkl"
     
     if not file_path.exists():
         return None
@@ -24,7 +24,7 @@ def load_sample_result(model_name: str, data_name: str, sample_idx: int):
 def load_all_results(model_name: str, data_name: str):
     """Load all results for a model/dataset"""
     model_short = model_name.split('/')[-1] if '/' in model_name else model_name
-    directory_path = Path("haf_results") / model_short / data_name
+    directory_path = Path("arc_results") / model_short / data_name
     
     if not directory_path.exists():
         return None
@@ -60,7 +60,7 @@ def calculate_metric_summary(values: List[float]) -> MetricSummary:
 
 @router.get("/sample/{model_name}/{data_name}/{sample_idx}", response_model=SampleResultResponse)
 async def get_sample_result(model_name: str, data_name: str, sample_idx: int):
-    """Get HAF results for a specific sample"""
+    """Get ArC results for a specific sample"""
     result = load_sample_result(model_name, data_name, sample_idx)
     
     if result is None:
@@ -180,7 +180,7 @@ async def compare_models(
 @router.get("/list")
 async def list_available_results():
     """List all available model/dataset combinations"""
-    results_path = Path("haf_results")
+    results_path = Path("arc_results")
     available = []
     
     if results_path.exists():

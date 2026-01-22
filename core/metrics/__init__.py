@@ -1,4 +1,4 @@
-"""HAF Metrics Module"""
+"""ArC Metrics Module"""
 from .base import BaseMetric
 from .relevance import SoSMetric, DiSMetric
 from .reliance import UIIMetric, UEIMetric

@@ -2,7 +2,7 @@
 import numpy as np
 from typing import Dict, Any
 from .base import BaseMetric
-from utils import haf_hyperparams as haf_hp
+from utils import arc_hyperparams as arc_hp
 from utils import helpers as hp
 
 
@@ -34,8 +34,8 @@ class SoSMetric(BaseMetric):
             confidence = confidences[reason_ix]
             sim = sims_input[reason_ix]
             
-            sos_score = (haf_hp.SoS_Prediction_Weight * confidence) + \
-                       (haf_hp.SoS_Similarity_Weight * sim)
+            sos_score = (arc_hp.SoS_Prediction_Weight * confidence) + \
+                       (arc_hp.SoS_Similarity_Weight * sim)
             
             sos_scores[f'reason_{reason_ix}'] = sos_score
         

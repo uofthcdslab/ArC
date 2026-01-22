@@ -1,21 +1,21 @@
-"""Modular HAF computation script"""
+"""Modular ArC (Argument-based Consistency) computation script"""
 import argparse
 import pickle
 from pathlib import Path
 from tqdm import tqdm
 
-from core.models.haf_config import HAFConfig
-from services.haf_service import HAFService
+from core.models.arc_config import ArCConfig
+from services.arc_service import ArCService
 from utils import helpers as hp
-from utils.data_path_prefixes import HAF_RESULTS_PATH
+from utils.data_path_prefixes import ARC_RESULTS_PATH
 
 
 def save_sample_results(results, sample_ix, model_name, data_name, explicit_prompting):
     """Save sample results to file"""
     if explicit_prompting == '':
-        directory_path = Path(HAF_RESULTS_PATH + "_naive" + "/" + model_name.split('/')[1] + '/' + data_name + '/')
+        directory_path = Path(ARC_RESULTS_PATH + "_naive" + "/" + model_name.split('/')[1] + '/' + data_name + '/')
     else:
-        directory_path = Path(HAF_RESULTS_PATH + "/" + model_name.split('/')[1] + '/' + data_name + '/')
+        directory_path = Path(ARC_RESULTS_PATH + "/" + model_name.split('/')[1] + '/' + data_name + '/')
     
     directory_path.mkdir(parents=True, exist_ok=True)
     file_path = directory_path / (str(sample_ix) + '.pkl')
@@ -24,14 +24,14 @@ def save_sample_results(results, sample_ix, model_name, data_name, explicit_prom
         pickle.dump(results, f)
 
 
-def compute_haf_metrics(config: HAFConfig):
+def compute_arc_metrics(config: ArCConfig):
     """
-    Compute HAF metrics for all models and datasets
+    Compute ArC metrics for all models and datasets
     
     Args:
-        config: HAF configuration
+        config: ArC configuration
     """
-    service = HAFService(config)
+    service = ArCService(config)
     
     for data_name in service.data_names:
         for model_name in service.model_names:
@@ -58,7 +58,7 @@ def compute_haf_metrics(config: HAFConfig):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Compute HAF metrics using modular architecture")
+    parser = argparse.ArgumentParser(description="Compute ArC (Argument-based Consistency) metrics using modular architecture")
     parser.add_argument(
         "--explicit_prompting", type=str, required=False, default='True',
         help="Prompt with explicit instructions (True/False)"
@@ -76,11 +76,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     # Create configuration
-    config = HAFConfig.from_args(
+    config = ArCConfig.from_args(
         explicit_prompting=(args.explicit_prompting == 'True'),
         use_scores=(args.use_scores == 'True'),
         similarity_model=args.similarity_model
     )
     
     # Compute metrics
-    compute_haf_metrics(config)
+    compute_arc_metrics(config)

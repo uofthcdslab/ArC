@@ -1,4 +1,4 @@
-"""Response schemas for HAF API"""
+"""Response schemas for ArC API"""
 from pydantic import BaseModel, Field
 from typing import Dict, List, Optional, Any
 
@@ -28,7 +28,7 @@ class MetricSummary(BaseModel):
 
 
 class SummaryResponse(BaseModel):
-    """Summary of HAF metrics for a model/dataset"""
+    """Summary of ArC metrics for a model/dataset"""
     model_name: str
     data_name: str
     total_samples: int

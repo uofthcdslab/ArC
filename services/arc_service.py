@@ -1,4 +1,4 @@
-"""Main HAF computation service"""
+"""Main ArC (Argument-based Consistency) computation service"""
 import json
 import torch
 import numpy as np
@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Dict, List
 from transformers import AutoTokenizer
 
-from core.models.haf_config import HAFConfig
+from core.models.arc_config import ArCConfig
 from core.metrics import SoSMetric, DiSMetric, UIIMetric, UEIMetric, RSMetric, RNMetric
 from core.processors import ConfidenceProcessor, SimilarityProcessor
 from utils import helpers as hp
@@ -19,18 +19,18 @@ TARGET_SENTS = {
 }
 
 
-class HAFService:
-    """Main service for HAF computation"""
+class ArCService:
+    """Main service for ArC computation"""
     
-    def __init__(self, config: HAFConfig):
+    def __init__(self, config: ArCConfig):
         """
-        Initialize HAF service
+        Initialize ArC service
         
         Args:
-            config: HAF configuration
+            config: ArC configuration
         """
         self.config = config
-        self.logger = setup_logger("haf_service", "ERROR", "haf_service_logs")
+        self.logger = setup_logger("arc_service", "ERROR", "arc_service_logs")
         
         # Load model and data details
         with open("utils/model_size_map.json", "r") as file:
@@ -92,7 +92,7 @@ class HAFService:
     def compute_sample(self, sample_ix: int, model_name: str, data_name: str,
                       output_tokens_dict: Dict, parsed_output_dict: Dict) -> Dict:
         """
-        Compute all HAF metrics for a single sample
+        Compute all ArC metrics for a single sample
         
         Args:
             sample_ix: Sample index
@@ -421,10 +421,10 @@ class HAFService:
     #                                    ind_decision_sent, ind_decision_tokens, ind_decision_indices, 
     #                                    ind_decision_relevances):
     #     """Store individual decision information to file"""
-    #     from utils.data_path_prefixes import HAF_RESULTS_PATH
+    #     from utils.data_path_prefixes import ARC_RESULTS_PATH
     #     import pickle
     #     
-    #     directory_path = Path(HAF_RESULTS_PATH + "/" + model_name.split('/')[1] + '/' + data_name + '/' + 'individual_decisions/')
+    #     directory_path = Path(ARC_RESULTS_PATH + "/" + model_name.split('/')[1] + '/' + data_name + '/' + 'individual_decisions/')
     #     directory_path.mkdir(parents=True, exist_ok=True)
     #     file_path = directory_path / (str(sample_ix) + '.pkl')
     #     self.logger.info(f"💾 Saving results to {file_path}")

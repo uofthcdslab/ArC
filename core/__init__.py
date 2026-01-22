@@ -1,1 +1,1 @@
-# Core HAF computation modules
+# Core ArC computation modules

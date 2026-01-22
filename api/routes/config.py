@@ -240,9 +240,9 @@ async def delete_dataset_item(dataset_name: str):
 
 @router.get("/hyperparams")
 async def get_hyperparams():
-    """Read all HAF hyperparameters"""
+    """Read all ArC hyperparameters"""
     try:
-        with open("utils/haf_hyperparams.py", "r") as f:
+        with open("utils/arc_hyperparams.py", "r") as f:
             content = f.read()
         
         hyperparams = {}
@@ -290,7 +290,7 @@ async def create_hyperparam_item(item: ConfigItemCreate):
         hyperparams[item.key] = item.value
         
         lines = [f"{key} = {value}" for key, value in hyperparams.items()]
-        with open("utils/haf_hyperparams.py", "w") as f:
+        with open("utils/arc_hyperparams.py", "w") as f:
             f.write('\n'.join(lines) + '\n')
         
         return {"success": True, "message": f"Hyperparameter '{item.key}' created"}
@@ -305,7 +305,7 @@ async def update_all_hyperparams(config: ConfigUpdate):
     """Update all hyperparameters"""
     try:
         lines = [f"{key} = {value}" for key, value in config.config_data.items()]
-        with open("utils/haf_hyperparams.py", "w") as f:
+        with open("utils/arc_hyperparams.py", "w") as f:
             f.write('\n'.join(lines) + '\n')
         
         return {"success": True, "message": "Hyperparameters updated"}
@@ -325,7 +325,7 @@ async def update_hyperparam_item(param_name: str, item: ConfigItemUpdate):
         hyperparams[param_name] = item.value
         
         lines = [f"{key} = {value}" for key, value in hyperparams.items()]
-        with open("utils/haf_hyperparams.py", "w") as f:
+        with open("utils/arc_hyperparams.py", "w") as f:
             f.write('\n'.join(lines) + '\n')
         
         return {"success": True, "message": f"Hyperparameter '{param_name}' updated"}
@@ -347,7 +347,7 @@ async def delete_hyperparam_item(param_name: str):
         del hyperparams[param_name]
         
         lines = [f"{key} = {value}" for key, value in hyperparams.items()]
-        with open("utils/haf_hyperparams.py", "w") as f:
+        with open("utils/arc_hyperparams.py", "w") as f:
             f.write('\n'.join(lines) + '\n')
         
         return {"success": True, "message": f"Hyperparameter '{param_name}' deleted"}

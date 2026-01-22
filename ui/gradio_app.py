@@ -1,4 +1,4 @@
-"""Gradio UI for HAF Dashboard"""
+"""Gradio UI for ArC Dashboard"""
 import gradio as gr
 import requests
 import pandas as pd
@@ -195,16 +195,16 @@ def create_radar_chart(comparison_data, models, metrics):
     fig.update_layout(
         polar=dict(radialaxis=dict(visible=True, range=[0, 1])),
         showlegend=True,
-        title="HAF Metrics Comparison"
+        title="ArC Metrics Comparison"
     )
     
     return fig
 
 
 # Create Gradio interface
-with gr.Blocks(title="HAF Dashboard", theme=gr.themes.Soft()) as app:
-    gr.Markdown("# Human-Aligned Faithfulness (HAF) Dashboard")
-    gr.Markdown("Evaluate LLM toxicity explanations using HAF metrics")
+with gr.Blocks(title="ArC Dashboard", theme=gr.themes.Soft()) as app:
+    gr.Markdown("# Argument-based Consistency (ArC) Dashboard")
+    gr.Markdown("Evaluate LLM toxicity explanations using ArC metrics")
     
     # API Status
     with gr.Row():
@@ -221,8 +221,8 @@ with gr.Blocks(title="HAF Dashboard", theme=gr.themes.Soft()) as app:
     with gr.Tabs():
         # Tab 1: View Results
         with gr.Tab("View Results"):
-            gr.Markdown("## View HAF Results")
-            gr.Markdown("Select a model and dataset to view computed HAF metrics")
+            gr.Markdown("## View ArC Results")
+            gr.Markdown("Select a model and dataset to view computed ArC metrics")
             
             with gr.Row():
                 model_dropdown = gr.Dropdown(
@@ -269,7 +269,7 @@ with gr.Blocks(title="HAF Dashboard", theme=gr.themes.Soft()) as app:
         # Tab 2: Compare Models
         with gr.Tab("Compare Models"):
             gr.Markdown("## Compare Models")
-            gr.Markdown("Select multiple models to compare their HAF metrics on the same dataset")
+            gr.Markdown("Select multiple models to compare their ArC metrics on the same dataset")
             
             with gr.Row():
                 models_checkboxgroup = gr.CheckboxGroup(
@@ -297,7 +297,7 @@ with gr.Blocks(title="HAF Dashboard", theme=gr.themes.Soft()) as app:
         # Tab 3: Run Pipeline
         with gr.Tab("Run Pipeline"):
             gr.Markdown("## Execute Full Pipeline")
-            gr.Markdown("Generate LLM outputs, parse them, and compute HAF metrics")
+            gr.Markdown("Generate LLM outputs, parse them, and compute ArC metrics")
             
             with gr.Row():
                 pipeline_model = gr.Dropdown(
@@ -546,7 +546,7 @@ with gr.Blocks(title="HAF Dashboard", theme=gr.themes.Soft()) as app:
                 
                 # Hyperparameters Configuration
                 with gr.Tab("Hyperparameters"):
-                    gr.Markdown("### HAF Hyperparameters")
+                    gr.Markdown("### ArC Hyperparameters")
                     
                     with gr.Row():
                         load_hyperparams_btn = gr.Button("Load All Hyperparameters", variant="secondary")

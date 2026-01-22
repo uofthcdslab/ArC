@@ -4,8 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from api.routes import compute, results, models, config, pipeline
 
 app = FastAPI(
-    title="HAF API",
-    description="Human-Aligned Faithfulness Metrics API",
+    title="ArC API",
+    description="Argument-based Consistency Metrics API",
     version="1.0.0"
 )
 
@@ -27,7 +27,7 @@ app.include_router(pipeline.router, prefix="/api/v1/pipeline", tags=["pipeline"]
 
 @app.get("/")
 async def root():
-    return {"message": "HAF API is running", "version": "1.0.0"}
+    return {"message": "ArC API is running", "version": "1.0.0"}
 
 @app.get("/health")
 async def health():

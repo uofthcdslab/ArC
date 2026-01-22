@@ -8,7 +8,7 @@ if __name__ == "__main__":
         # Quiet mode - minimal output
         pass
     else:
-        print("Starting HAF Gradio UI...")
+        print("Starting ArC Gradio UI...")
         print("Make sure the API server is running: python run_api.py")
         print("UI will be available at: http://localhost:7860")
     

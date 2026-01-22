@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "Starting HAF API and UI..."
+echo "Starting ArC API and UI..."
 echo ""
 
 # Start API server in background

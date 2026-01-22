@@ -2,7 +2,7 @@
 import torch
 from typing import Dict, Any
 from .base import BaseMetric
-from utils import haf_hyperparams as haf_hp
+from utils import arc_hyperparams as arc_hp
 
 
 class UIIMetric(BaseMetric):
@@ -47,8 +47,8 @@ class UIIMetric(BaseMetric):
                 diversity=True
             )
             
-            uii_score = (haf_hp.UII_Prediction_Weight * confidence) + \
-                       (haf_hp.UII_Diversity_Weight * between_runs_diversity)
+            uii_score = (arc_hp.UII_Prediction_Weight * confidence) + \
+                       (arc_hp.UII_Diversity_Weight * between_runs_diversity)
             
             uii_scores[f'reason_{reason_ix}'] = uii_score
         
@@ -102,8 +102,8 @@ class UEIMetric(BaseMetric):
                 diversity=True
             )
             
-            uei_score = (haf_hp.UII_Prediction_Weight * confidence) + \
-                       (haf_hp.UII_Diversity_Weight * between_runs_diversity)
+            uei_score = (arc_hp.UII_Prediction_Weight * confidence) + \
+                       (arc_hp.UII_Diversity_Weight * between_runs_diversity)
             
             uei_scores[f'reason_{reason_ix}'] = uei_score
         
