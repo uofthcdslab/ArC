@@ -1,14 +1,14 @@
-Argument-based Consistency in Toxicity Explanations of LLMs
+
+Argument-Based Consistency in Toxicity Explanations of LLMs
 ===========================================================
 
-.. image:: https://github.com/uofthcdslab/ArC/blob/main/utils/ArC_intro.png
+.. image:: https://github.com/uofthcdslab/ArC/blob/main/utils/arc_overall_flow.png
   :align: center
   :width: 400px
 
-The discourse around toxicity and LLMs in NLP largely revolves around detection tasks. This work shifts the focus to evaluating LLMs' *reasoning* about toxicity---from their explanations that justify a stance---to enhance their trustworthiness in downstream tasks. In our recent `paper <https://arxiv.org/pdf/2506.19113>`_, we propose a novel, theoretically-grounded multi-dimensional criterion, **Argument-based Consistency (ArC)**, that measures how LLMs' free-form toxicity explanations reflect those of a rational human under ideal conditions.
-We develop six metrics, based on uncertainty quantification, to comprehensively evaluate ArC of LLMs' toxicity explanations with no human involvement, and highlight how "non-ideal" the explanations are. This repository contains the code and sample data to reproduce our results. 
+The discourse around toxicity and LLMs in NLP largely revolves around detection tasks. This work shifts the focus to evaluating LLMs' *reasoning* about toxicity---from their explanations that justify a stance---to enhance their trustworthiness in downstream tasks. Despite extensive research on explainability, it is not straightforward to adopt existing methods to evaluate free-form toxicity explanation due to their over-reliance on input text perturbations, among other challenges. To account for these, in our recent `paper <https://arxiv.org/pdf/2506.19113>`_, we propose a novel, theoretically-grounded multi-dimensional criterion, **Argument-based Consistency** (ArC), that measures the extent to which LLMs' free-form toxicity explanations reflect an ideal and logical argumentation process. We develop six metrics, based on uncertainty quantification, to comprehensively evaluate ArC of LLMs' toxicity explanations with no human involvement, and highlight how "non-ideal" the explanations are. Our results show that while LLMs generate plausible explanations to simple prompts, their reasoning about toxicity breaks down when prompted about the nuanced relations between the complete set of reasons, the individual reasons, and their toxicity stances, resulting in inconsistent and irrelevant responses. This repository contains the code and sample data to reproduce our results. 
 
-The complete LLM-generated toxicity explanations and our ArC scores are available on `Hugging Face <https://huggingface.co/collections/uofthcdslab/ArC-6857895ac09959da821bd015>`_. The complete LLM output tokens and entropy scores are available upon request.
+The complete LLM-generated toxicity explanations and our ArC scores are available on `Hugging Face <https://huggingface.co/collections/uofthcdslab/arc>`_. The complete LLM output tokens and entropy scores are available upon request.
 
 
 Requirements:
@@ -90,6 +90,7 @@ To implement this, repeat the following steps with each of the four values for t
 1. Run `ArC.py <https://github.com/uofthcdslab/ArC/blob/main/ArC.py>`_ with optional parameters to compute ArC metrics for all combinations of models and datasets.
 
 Supported parameters:
+
 - ``--explicit_prompting``: Use explicit prompting (True/False, default: True)
 - ``--use_scores``: Use entropy of scores instead of logits (True/False, default: False)
 - ``--similarity_model``: Semantic similarity model name (default: cross-encoder/stsb-distilroberta-base)
@@ -142,8 +143,8 @@ Citing:
 =======
 Bibtex::
 
-	@article{mothilal2025ArC,
-	  title={Argument-based Consistency in Toxicity Explanations of LLMs},
+	@article{mothilal2025haf,
+	  title={Human-Aligned Faithfulness in Toxicity Explanations of LLMs},
 	  author={K Mothilal, Ramaravind and Roy, Joanna and Ahmed, Syed Ishtiaque and Guha, Shion},
 	  journal={arXiv preprint arXiv:2506.19113},
 	  year={2025}
