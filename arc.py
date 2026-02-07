@@ -1,4 +1,4 @@
-"""Modular ArC (Argument-based Consistency) computation script"""
+"""ArC (Argument-based Consistency) computation script"""
 import argparse
 import pickle
 from pathlib import Path
@@ -58,7 +58,7 @@ def compute_arc_metrics(config: ArCConfig):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Compute ArC (Argument-based Consistency) metrics using modular architecture")
+    parser = argparse.ArgumentParser(description="Compute ArC (Argument-based Consistency) metrics")
     parser.add_argument(
         "--explicit_prompting", type=str, required=False, default='True',
         help="Prompt with explicit instructions (True/False)"
@@ -75,10 +75,10 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
-    # Create configuration
+    # Create configuration with default values
     config = ArCConfig.from_args(
-        explicit_prompting=(args.explicit_prompting == 'True'),
-        use_scores=(args.use_scores == 'True'),
+        explicit_prompting=True,  # Default: use explicit prompting
+        use_scores=False,         # Default: use logits-based entropy
         similarity_model=args.similarity_model
     )
     

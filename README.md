@@ -1,4 +1,3 @@
-
 Argument-based Consistency in Toxicity Explanations of LLMs
 ===========================================================
 
@@ -7,7 +6,7 @@ Argument-based Consistency in Toxicity Explanations of LLMs
   :width: 400px
 
 The discourse around toxicity and LLMs in NLP largely revolves around detection tasks. This work shifts the focus to evaluating LLMs' *reasoning* about toxicity---from their explanations that justify a stance---to enhance their trustworthiness in downstream tasks. In our recent `paper <https://arxiv.org/pdf/2506.19113>`_, we propose a novel, theoretically-grounded multi-dimensional criterion, **Argument-based Consistency (ArC)**, that measures how LLMs' free-form toxicity explanations reflect those of a rational human under ideal conditions.
-We develop six metrics, based on uncertainty quantification, to comprehensively evaluate ArC of LLMs' toxicity explanations with no human involvement, and highlight how “non-ideal” the explanations are. This repository contains the code and sample data to reproduce our results. 
+We develop six metrics, based on uncertainty quantification, to comprehensively evaluate ArC of LLMs' toxicity explanations with no human involvement, and highlight how "non-ideal" the explanations are. This repository contains the code and sample data to reproduce our results. 
 
 The complete LLM-generated toxicity explanations and our ArC scores are available on `Hugging Face <https://huggingface.co/collections/uofthcdslab/ArC-6857895ac09959da821bd015>`_. The complete LLM output tokens and entropy scores are available upon request.
 
@@ -23,9 +22,9 @@ Quick Start:
 
 **1. Compute ArC Metrics:**
 
-``python ArC.py --explicit_prompting True --use_scores False``
+``python arc.py``
 
-This computes ArC metrics for all models and datasets, storing results in ``ArC_results/``
+This computes ArC metrics for all models and datasets using default parameters (explicit prompting enabled, logits-based entropy), storing results in ``arc_results/``
 
 **2. View Results (Command Line):**
 
@@ -33,23 +32,9 @@ This computes ArC metrics for all models and datasets, storing results in ``ArC_
 
 View summary statistics for a specific model/dataset combination.
 
-**3. Start API Server:**
+**3. Explore Results (Jupyter Notebook):**
 
-``python run_api.py``
-
-API available at: http://localhost:8000
-
-API documentation at: http://localhost:8000/docs
-
-**4. Start Gradio UI:**
-
-In a separate terminal:
-
-``python run_ui.py``
-
-UI available at: http://localhost:7860
-
-The Gradio interface provides interactive exploration of ArC metrics with visualization and model comparison features.
+See ``demo_arc_metrics.ipynb`` for an interactive demonstration of how to use the ArC classes and visualize metric outputs.
 
 
 Pipeline:
@@ -60,20 +45,18 @@ Quick Demo (with sample data):
 
 The required sample input data to run the demo is included in `llm_generated_data/ <https://github.com/uofthcdslab/ArC/tree/main/llm_generated_data>`_ and `parsed_data/ <https://github.com/uofthcdslab/ArC/tree/main/parsed_data>`_ directories. To compute ArC metrics on this sample data, run:
 
-``python ArC.py``
+``python arc.py``
 
-This will compute the ArC metrics for the sample data and store the results in `ArC_results/ <https://github.com/uofthcdslab/ArC/tree/main/ArC_results>`_ directory. The results include ArC scores for different models and datasets.
+This will compute the ArC metrics for the sample data and store the results in `arc_results/ <https://github.com/uofthcdslab/ArC/tree/main/arc_results>`_ directory. The results include ArC scores for different models and datasets.
 
-**Modular Architecture:**
+**Code Architecture:**
 
-The codebase uses a modular architecture that separates concerns and makes the code more maintainable:
+The codebase uses a clean architecture that separates concerns:
 
 - ``core/metrics/``: Individual metric implementations (SoS, DiS, UII, UEI, RS, RN)
 - ``core/processors/``: Confidence and similarity computation processors
 - ``core/models/``: Configuration and data models
 - ``services/``: High-level ArC computation service
-
-This modular design makes it easier to extend, test, and maintain the codebase.
 
 
 Reproducing Full Pipeline:
@@ -104,14 +87,14 @@ To implement this, repeat the following steps with each of the four values for t
 
 **Computing ArC metrics:**
 
-1. Run `ArC.py <https://github.com/uofthcdslab/ArC/blob/main/ArC.py>`_ with optional parameters to compute ArC metrics for all combinations of models and datasets.
+1. Run `arc.py <https://github.com/uofthcdslab/ArC/blob/main/arc.py>`_ with optional parameters to compute ArC metrics for all combinations of models and datasets.
 
 Supported parameters:
 - ``--explicit_prompting``: Use explicit prompting (True/False, default: True)
 - ``--use_scores``: Use entropy of scores instead of logits (True/False, default: False)
 - ``--similarity_model``: Semantic similarity model name (default: cross-encoder/stsb-distilroberta-base)
 
-2. The outputs will be computed for each sample instance and stored in ``ArC_results/<model_name>/<data_name>/<sample_index>.pkl``.
+2. The outputs will be computed for each sample instance and stored in ``arc_results/<model_name>/<data_name>/<sample_index>.pkl``.
 
 
 Viewing Results:
@@ -146,81 +129,13 @@ This will show all computed models and datasets with their sample counts.
 - ``--model_name``: Model name (e.g., Llama-3.1-8B-Instruct, Llama-3.2-3B-Instruct, Llama-3.3-70B-Instruct, Ministral-8B-Instruct-2410)
 - ``--data_name``: Dataset name (e.g., civil_comments, hate_explain, implicit_toxicity, real_toxicity_prompts, toxigen)
 - ``--sample_idx``: Specific sample index to view detailed results (optional)
-- ``--results_path``: Path to results directory (default: ArC_results)
+- ``--results_path``: Path to results directory (default: arc_results)
 
 
 Roadmap:
 ========
 1. We are working on updating the parser files to support more datasets and models. We will soon integrate the results of Microsoft Phi-4 reasoning model.
 2. We will include the results of naive prompting without explicit reasoning instructions.
-
-
-API and UI:
-===========
-
-The project now includes a FastAPI backend and Gradio UI for interactive exploration of ArC metrics.
-
-**Installation:**
-
-First, install the required dependencies:
-
-``pip install -r requirements.txt``
-
-**Starting the API Server:**
-
-``python run_api.py``
-
-The API will be available at http://localhost:8000
-
-**Starting the Gradio UI:**
-
-In a separate terminal, run:
-
-``python run_ui.py``
-
-The UI will be available at http://localhost:7860
-
-**API Documentation:**
-
-Once the server is running, visit:
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
-
-**Available API Endpoints:**
-
-- ``GET /api/v1/models/list`` - List all available models
-- ``GET /api/v1/models/datasets`` - List all available datasets
-- ``GET /api/v1/results/summary/{model_name}/{data_name}`` - Get summary statistics
-- ``GET /api/v1/results/sample/{model_name}/{data_name}/{sample_idx}`` - Get specific sample results
-- ``GET /api/v1/results/compare`` - Compare multiple models
-- ``POST /api/v1/compute/single`` - Compute ArC metrics for a model/dataset
-- ``POST /api/v1/compute/all`` - Compute ArC metrics for all combinations
-
-**Gradio UI Features:**
-
-- **View Results**: Browse ArC metrics for any model/dataset combination
-- **Compare Models**: Side-by-side comparison with radar charts
-- **Run Pipeline**: Execute the full pipeline (generate → parse → compute) from the UI
-- **Configuration**: Manage all configuration files:
-  - Model size configuration (utils/model_size_map.json)
-  - Dataset paths (utils/data_path_map.json)
-  - ArC hyperparameters (utils/ArC_hyperparams.py)
-  - Prompt instructions (utils/prompt_instructions.json)
-  - Data path prefixes (utils/data_path_prefixes.py)
-
-**API Pipeline Endpoints:**
-
-- ``POST /api/v1/pipeline/generate`` - Generate LLM outputs for a stage
-- ``POST /api/v1/pipeline/parse`` - Parse LLM outputs for a stage
-- ``POST /api/v1/pipeline/full`` - Run complete pipeline (all stages)
-
-**API Configuration Endpoints:**
-
-- ``GET/PUT /api/v1/config/models`` - Manage model configuration
-- ``GET/PUT /api/v1/config/datasets`` - Manage dataset configuration
-- ``GET/PUT /api/v1/config/hyperparams`` - Manage ArC hyperparameters
-- ``GET/PUT /api/v1/config/prompts`` - Manage prompt instructions
-- ``GET/PUT /api/v1/config/paths`` - Manage data path prefixes
 
 
 Citing:
@@ -233,4 +148,3 @@ Bibtex::
 	  journal={arXiv preprint arXiv:2506.19113},
 	  year={2025}
 	}
-
