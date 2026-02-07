@@ -22,7 +22,7 @@ Quick Start:
 
 **1. Compute ArC Metrics:**
 
-``python arc.py``
+``python ArC.py``
 
 This computes ArC metrics for all models and datasets using default parameters (explicit prompting enabled, logits-based entropy), storing results in ``arc_results/``
 
@@ -45,7 +45,7 @@ Quick Demo (with sample data):
 
 The required sample input data to run the demo is included in `llm_generated_data/ <https://github.com/uofthcdslab/ArC/tree/main/llm_generated_data>`_ and `parsed_data/ <https://github.com/uofthcdslab/ArC/tree/main/parsed_data>`_ directories. To compute ArC metrics on this sample data, run:
 
-``python arc.py``
+``python ArC.py``
 
 This will compute the ArC metrics for the sample data and store the results in `arc_results/ <https://github.com/uofthcdslab/ArC/tree/main/arc_results>`_ directory. The results include ArC scores for different models and datasets.
 
@@ -87,7 +87,7 @@ To implement this, repeat the following steps with each of the four values for t
 
 **Computing ArC metrics:**
 
-1. Run `arc.py <https://github.com/uofthcdslab/ArC/blob/main/arc.py>`_ with optional parameters to compute ArC metrics for all combinations of models and datasets.
+1. Run `ArC.py <https://github.com/uofthcdslab/ArC/blob/main/ArC.py>`_ with optional parameters to compute ArC metrics for all combinations of models and datasets.
 
 Supported parameters:
 - ``--explicit_prompting``: Use explicit prompting (True/False, default: True)
