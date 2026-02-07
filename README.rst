@@ -6,9 +6,14 @@ Argument-Based Consistency in Toxicity Explanations of LLMs
   :align: center
   :width: 400px
 
-The discourse around toxicity and LLMs in NLP largely revolves around detection tasks. This work shifts the focus to evaluating LLMs' *reasoning* about toxicity---from their explanations that justify a stance---to enhance their trustworthiness in downstream tasks. Despite extensive research on explainability, it is not straightforward to adopt existing methods to evaluate free-form toxicity explanation due to their over-reliance on input text perturbations, among other challenges. To account for these, in our recent `paper <https://arxiv.org/pdf/2506.19113>`_, we propose a novel, theoretically-grounded multi-dimensional criterion, **Argument-based Consistency** (ArC), that measures the extent to which LLMs' free-form toxicity explanations reflect an ideal and logical argumentation process. We develop six metrics, based on uncertainty quantification, to comprehensively evaluate ArC of LLMs' toxicity explanations with no human involvement, and highlight how “non-ideal” the explanations are. Our results show that while LLMs generate plausible explanations to simple prompts, their reasoning about toxicity breaks down when prompted about the nuanced relations between the complete set of reasons, the individual reasons, and their toxicity stances, resulting in inconsistent and irrelevant responses. This repository contains the code and sample data to reproduce our results. 
+**Context:** The discourse around toxicity and LLMs in NLP largely revolves around detection tasks. This work shifts the focus to evaluating LLMs' *reasoning* about toxicity—from their explanations that justify a stance—to enhance their trustworthiness in downstream tasks. Despite extensive research on explainability, it is not straightforward to adopt existing methods to evaluate free-form toxicity explanation due to their over-reliance on input text perturbations, among other challenges. 
 
-The complete LLM-generated toxicity explanations and our ArC scores are available on `Hugging Face <https://huggingface.co/collections/uofthcdslab/arc>`_. The complete LLM output tokens and entropy scores are available upon request.
+**Approach:** To account for these, in our recent `paper <https://arxiv.org/pdf/2506.19113>`_ **[To appear in EACL'26]**, we propose a novel, theoretically-grounded multi-dimensional criterion, **Argument-based Consistency** (ArC), that measures the extent to which LLMs' free-form toxicity explanations reflect an ideal and logical argumentation process. We develop six metrics, based on uncertainty quantification, to provide a *diagnostic framework* for assessing various forms of consistency, capturing the interrelatedness of different dimensions in ideal toxicity reasoning.
+
+**Outcome:** Our results show that while LLMs generate plausible explanations to simple prompts, their reasoning about toxicity breaks down when prompted about the nuanced relations between the complete set of reasons, the individual reasons, and their toxicity stances, resulting in inconsistent and irrelevant responses. In particular, the models we studied generally perform poorly in upholding their own stated
+reasons, and fail to capture that for toxic stances, each individual reason is logically sufficient (as any safety violation indicates toxicity), while for nontoxicity, all stated reasons are logically necessary (as all must hold to establish safety).
+
+This repository contains the code and sample data to reproduce our results. The complete LLM-generated toxicity explanations and our ArC scores are available on `Hugging Face <https://huggingface.co/collections/uofthcdslab/arc>`_. The complete LLM output tokens and entropy scores are available upon request.
 
 
 Requirements:
@@ -22,9 +27,12 @@ Quick Start:
 
 **1. Compute ArC Metrics:**
 
+The required sample input data to see a demonstration of ArC is included in `llm_generated_data/ <https://github.com/uofthcdslab/ArC/tree/main/llm_generated_data>`_ and `parsed_data/ <https://github.com/uofthcdslab/ArC/tree/main/parsed_data>`_ directories. To compute ArC metrics on this sample, run:
+
 ``python ArC.py``
 
-This computes ArC metrics for all models and datasets using default parameters (explicit prompting enabled, logits-based entropy), storing results in ``arc_results/``
+This computes ArC metrics for the sample data using default parameters, storing results in
+`arc_results/ <https://github.com/uofthcdslab/ArC/tree/main/arc_results>`_.
 
 **2. View Results (Command Line):**
 
@@ -37,21 +45,10 @@ View summary statistics for a specific model/dataset combination.
 See ``demo_arc_metrics.ipynb`` for an interactive demonstration of how to use the ArC classes and visualize metric outputs.
 
 
-Pipeline:
+Reproducing Full Pipeline:
 =========
 
-Quick Demo (with sample data):
-------------------------------
-
-The required sample input data to run the demo is included in `llm_generated_data/ <https://github.com/uofthcdslab/ArC/tree/main/llm_generated_data>`_ and `parsed_data/ <https://github.com/uofthcdslab/ArC/tree/main/parsed_data>`_ directories. To compute ArC metrics on this sample data, run:
-
-``python ArC.py``
-
-This will compute the ArC metrics for the sample data and store the results in `arc_results/ <https://github.com/uofthcdslab/ArC/tree/main/arc_results>`_ directory. The results include ArC scores for different models and datasets.
-
 **Code Architecture:**
-
-The codebase uses a clean architecture that separates concerns:
 
 - ``core/metrics/``: Individual metric implementations (SoS, DiS, UII, UEI, RS, RN)
 - ``core/processors/``: Confidence and similarity computation processors
@@ -59,17 +56,14 @@ The codebase uses a clean architecture that separates concerns:
 - ``services/``: High-level ArC computation service
 
 
-Reproducing Full Pipeline:
---------------------------
-
-**Using an existing or a new dataset:**
+**Using an Existing or a New Dataset:**
 
 1. Add the dataset name and path in `utils/data_path_map.json <https://github.com/uofthcdslab/ArC/blob/main/utils/data_path_map.json>`_.
 2. Include the main processing function for the dataset in `utils/data_processor.py <https://github.com/uofthcdslab/ArC/blob/main/utils/data_processor.py>`_ and give it the exact same name as the dataset.
 3. Access shared parameters and methods defined in the `DataLoader <https://github.com/uofthcdslab/ArC/blob/main/data_loader.py#L8>`_ class in `data_loader.py <https://github.com/uofthcdslab/ArC/blob/main/data_loader>`_ through instance references.
 
 
-**LLM explanation generation and parsing:**
+**LLM Explanation Generation and Parsing:**
 
 In the paper, we describe a three-stage pipeline to compute **ArC** metrics. The pipeline consists of:
 
@@ -85,7 +79,7 @@ To implement this, repeat the following steps with each of the four values for t
 4. The parsed outputs will be stored in ``parsed_data/<model_name>/<data_name>/<stage>``.
 
 
-**Computing ArC metrics:**
+**Computing ArC Metrics:**
 
 1. Run `ArC.py <https://github.com/uofthcdslab/ArC/blob/main/ArC.py>`_ with optional parameters to compute ArC metrics for all combinations of models and datasets.
 
@@ -99,7 +93,7 @@ Supported parameters:
 
 
 Viewing Results:
-----------------
+=========
 
 After computing ArC metrics, use `view_results.py <https://github.com/uofthcdslab/ArC/blob/main/view_results.py>`_ to analyze and summarize the results:
 
@@ -143,9 +137,10 @@ Citing:
 =======
 Bibtex::
 
-	@article{mothilal2025haf,
-	  title={Human-Aligned Faithfulness in Toxicity Explanations of LLMs},
-	  author={K Mothilal, Ramaravind and Roy, Joanna and Ahmed, Syed Ishtiaque and Guha, Shion},
-	  journal={arXiv preprint arXiv:2506.19113},
+	@article{kommiya2025argument,
+	  title={Argument-Based Consistency in Toxicity Explanations of LLMs},
+	  author={Kommiya Mothilal, Ramaravind and Roy, Joanna and Ishtiaque Ahmed, Syed and Guha, Shion},
+	  journal={arXiv e-prints},
+	  pages={arXiv--2506},
 	  year={2025}
 	}
