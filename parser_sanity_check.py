@@ -1,5 +1,5 @@
 '''
-Consolidates sanity checks results of HAF parser
+Consolidates sanity checks results of ArC parser
 '''
 import pandas as pd
 import argparse

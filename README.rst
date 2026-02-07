@@ -17,17 +17,46 @@ Requirements:
 ``pip install -r requirements.txt``
 
 
+Quick Start:
+============
+
+**1. Compute ArC Metrics:**
+
+``python ArC.py``
+
+This computes ArC metrics for all models and datasets using default parameters (explicit prompting enabled, logits-based entropy), storing results in ``arc_results/``
+
+**2. View Results (Command Line):**
+
+``python view_results.py --model_name Llama-3.1-8B-Instruct --data_name civil_comments``
+
+View summary statistics for a specific model/dataset combination.
+
+**3. Explore Results (Jupyter Notebook):**
+
+See ``demo_arc_metrics.ipynb`` for an interactive demonstration of how to use the ArC classes and visualize metric outputs.
+
+
 Pipeline:
 =========
 
 Quick Demo (with sample data):
 ------------------------------
 
-The required sample input data to run the demo is included in `llm_generated_data/ <https://github.com/uofthcdslab/ArC/tree/main/llm_generated_data>`_ and `parsed_data/ <https://github.com/uofthcdslab/ArC/tree/main/parsed_data>`_ directories. To compute ArC metrics on this sample data, run the following command:
+The required sample input data to run the demo is included in `llm_generated_data/ <https://github.com/uofthcdslab/ArC/tree/main/llm_generated_data>`_ and `parsed_data/ <https://github.com/uofthcdslab/ArC/tree/main/parsed_data>`_ directories. To compute ArC metrics on this sample data, run:
 
-``python haf.py``
+``python ArC.py``
 
-This will compute the ArC metrics for the sample data and store the results in `haf_results/ <https://github.com/uofthcdslab/ArC/tree/main/haf_results>`_ directory. The results include ArC scores for different models and datasets.
+This will compute the ArC metrics for the sample data and store the results in `arc_results/ <https://github.com/uofthcdslab/ArC/tree/main/arc_results>`_ directory. The results include ArC scores for different models and datasets.
+
+**Code Architecture:**
+
+The codebase uses a clean architecture that separates concerns:
+
+- ``core/metrics/``: Individual metric implementations (SoS, DiS, UII, UEI, RS, RN)
+- ``core/processors/``: Confidence and similarity computation processors
+- ``core/models/``: Configuration and data models
+- ``services/``: High-level ArC computation service
 
 
 Reproducing Full Pipeline:
@@ -58,8 +87,50 @@ To implement this, repeat the following steps with each of the four values for t
 
 **Computing ArC metrics:**
 
-1. Run `haf.py <https://github.com/uofthcdslab/ArC/blob/main/haf.py>`_ with optional parameters to compute ArC metrics for all combinations of models and datasets.
-2. The outputs will be computed for each sample instance and stored in ``haf_results/<model_name>/<data_name>/<sample_index>.pkl``.
+1. Run `ArC.py <https://github.com/uofthcdslab/ArC/blob/main/ArC.py>`_ with optional parameters to compute ArC metrics for all combinations of models and datasets.
+
+Supported parameters:
+
+- ``--explicit_prompting``: Use explicit prompting (True/False, default: True)
+- ``--use_scores``: Use entropy of scores instead of logits (True/False, default: False)
+- ``--similarity_model``: Semantic similarity model name (default: cross-encoder/stsb-distilroberta-base)
+
+2. The outputs will be computed for each sample instance and stored in ``arc_results/<model_name>/<data_name>/<sample_index>.pkl``.
+
+
+Viewing Results:
+----------------
+
+After computing ArC metrics, use `view_results.py <https://github.com/uofthcdslab/ArC/blob/main/view_results.py>`_ to analyze and summarize the results:
+
+**View summary statistics for all samples:**
+
+``python view_results.py --model_name Llama-3.1-8B-Instruct --data_name civil_comments``
+
+This displays aggregated statistics (mean, std, min, max) for all ArC metrics:
+
+- **Relevance Dimension:** SoS (Sufficiency of Stance), DiS-DPP, DiS-Avg (Diversity of Stance)
+- **Internal Reliance Dimension:** UII (Uncertainty in Internal Informativeness), Internal Δ-PE
+- **External Reliance Dimension:** UEI (Uncertainty in External Informativeness), External Δ-PE
+- **Individual Reliance Dimension:** RS (Reason Sufficiency), RN (Reason Necessity)
+- **Decision Confidence:** Initial, Internal, and External decision confidences
+
+**View detailed results for a specific sample:**
+
+``python view_results.py --model_name Llama-3.1-8B-Instruct --data_name civil_comments --sample_idx 0``
+
+**List all available results:**
+
+``python view_results.py``
+
+This will show all computed models and datasets with their sample counts.
+
+**Available options:**
+
+- ``--model_name``: Model name (e.g., Llama-3.1-8B-Instruct, Llama-3.2-3B-Instruct, Llama-3.3-70B-Instruct, Ministral-8B-Instruct-2410)
+- ``--data_name``: Dataset name (e.g., civil_comments, hate_explain, implicit_toxicity, real_toxicity_prompts, toxigen)
+- ``--sample_idx``: Specific sample index to view detailed results (optional)
+- ``--results_path``: Path to results directory (default: arc_results)
 
 
 Roadmap:

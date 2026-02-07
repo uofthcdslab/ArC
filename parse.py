@@ -17,12 +17,12 @@ from pathlib import Path
 from tqdm import tqdm
 from utils.data_path_prefixes import GEN_OUTPUT_PATH, PARSE_OUTPUT_PATH
 
-class HAFParser:
-    """A class to extract reasons and other required information for computing HAF"""
+class ArCParser:
+    """A class to extract reasons and other required information for computing ArC"""
     
     def __init__(self, args, logger):
         self.logger = logger
-        self.logger.info(f"Initializing HAF parser with model: {args.model_name}, data: {args.data_name}")
+        self.logger.info(f"Initializing ArC parser with model: {args.model_name}, data: {args.data_name}")
            
         # initiate class variables and others to store results
         self.initiate_class_variables(args)
@@ -39,7 +39,7 @@ class HAFParser:
             
         # initiate similarity computing class
         self.sims_hp = SentenceSimilarity(self.similarity_model, self.logger)
-        self.logger.info("HAF parser initialization complete")
+        self.logger.info("ArC parser initialization complete")
     
     def set_required_seeds(self, seed_value=17):
         self.logger.info(f"Setting random seeds to {seed_value} for reproducibility")
@@ -327,21 +327,21 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     # Set up logger using the centralized logger setup
-    logger_name = f"haf_parser_{args.model_name.split('/')[1].replace('-', '_')}_{args.data_name}_{args.stage}"
-    logger = setup_logger(logger_name, args.log_level, "haf_parser_logs")
-    logger.info(f"Starting HAF parsing with model: {args.model_name}, data: {args.data_name}")
+    logger_name = f"arc_parser_{args.model_name.split('/')[1].replace('-', '_')}_{args.data_name}_{args.stage}"
+    logger = setup_logger(logger_name, args.log_level, "arc_parser_logs")
+    logger.info(f"Starting ArC parsing with model: {args.model_name}, data: {args.data_name}")
     
     try:
-        haf_parser = HAFParser(args, logger)
+        arc_parser = ArCParser(args, logger)
         logger.info("Extracting required info...")
-        haf_parser.parse_llm_generation()
-        logger.info("HAF parsing complete")
+        arc_parser.parse_llm_generation()
+        logger.info("ArC parsing complete")
         
         logger.info("Performing sanity checks...")
-        do_sanity_checks(haf_parser.model_name, haf_parser.data_name, haf_parser.decisions, haf_parser.decision_sentences, 
-                         haf_parser.reasons, haf_parser.stage, haf_parser.explicit_prompting, haf_parser.logger)
+        do_sanity_checks(arc_parser.model_name, arc_parser.data_name, arc_parser.decisions, arc_parser.decision_sentences, 
+                         arc_parser.reasons, arc_parser.stage, arc_parser.explicit_prompting, arc_parser.logger)
         logger.info("Sanity checks complete")
                         
     except Exception as e:
-        logger.critical(f"Fatal error during HAF parsing: {str(e)}", exc_info=True)
+        logger.critical(f"Fatal error during ArC parsing: {str(e)}", exc_info=True)
         raise

@@ -98,3 +98,4 @@ wcwidth==0.2.13
 xformers @ https://download.pytorch.org/whl/cu124/xformers-0.0.28.post2-cp311-cp311-win_amd64.whl#sha256=852f1fa29d68a8eca8d7a100f95f5ca663c5ceda3f2060b7f00d390145f379c9
 xxhash==3.5.0
 yarl==1.18.3
+
