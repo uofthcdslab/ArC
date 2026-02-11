@@ -254,8 +254,7 @@ class ArCService:
             'initial_reasons_confidences': initial_result['initial_reasons_confidences']
         }
         metric_result = metric.compute(metric_data)
-        result[metric.get_name()] = {k: v for k, v in metric_result.items() if k != 'del_pe'}
-        result[f'{reliance_type}_del_pe'] = metric_result.get('del_pe', np.nan)
+        result[metric.get_name()] = metric_result
         
         return result
     

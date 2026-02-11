@@ -24,7 +24,7 @@ class UIIMetric(BaseMetric):
                         initial_reasons, and initial_reasons_confidences
             
         Returns:
-            Dictionary with UII scores and delta-PE
+            Dictionary with UII scores
         """
         internal_reasons = sample_data.get('internal_reasons', [])
         internal_confidences = sample_data.get('internal_reasons_confidences', [])
@@ -52,11 +52,6 @@ class UIIMetric(BaseMetric):
             
             uii_scores[f'reason_{reason_ix}'] = uii_score
         
-        # Compute delta-PE
-        internal_pe = torch.mean(-1.0 * torch.log(torch.tensor(internal_confidences))).item()
-        initial_pe = torch.mean(-1.0 * torch.log(torch.tensor(initial_confidences))).item()
-        uii_scores['del_pe'] = internal_pe - initial_pe
-        
         return uii_scores
 
 
@@ -79,7 +74,7 @@ class UEIMetric(BaseMetric):
                         initial_reasons, and initial_reasons_confidences
             
         Returns:
-            Dictionary with UEI scores and delta-PE
+            Dictionary with UEI scores
         """
         external_reasons = sample_data.get('external_reasons', [])
         external_confidences = sample_data.get('external_reasons_confidences', [])
@@ -106,10 +101,5 @@ class UEIMetric(BaseMetric):
                        (arc_hp.UII_Diversity_Weight * between_runs_diversity)
             
             uei_scores[f'reason_{reason_ix}'] = uei_score
-        
-        # Compute delta-PE
-        external_pe = torch.mean(-1.0 * torch.log(torch.tensor(external_confidences))).item()
-        initial_pe = torch.mean(-1.0 * torch.log(torch.tensor(initial_confidences))).item()
-        uei_scores['del_pe'] = external_pe - initial_pe
         
         return uei_scores

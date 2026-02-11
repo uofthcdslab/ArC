@@ -49,9 +49,6 @@ def summarize_arc_metrics(results):
         'initial_decision_confidence': [],
         'internal_decision_confidence': [],
         'external_decision_confidence': [],
-        'internal_del_pe': [],
-        'external_del_pe': [],
-        'DiS_dpp': [],
         'DiS_avg': []
     }
     
@@ -110,10 +107,6 @@ def summarize_arc_metrics(results):
         print(f"    Mean: {np.mean(sos_values):.4f} | Std: {np.std(sos_values):.4f}")
         print(f"    Min: {np.min(sos_values):.4f} | Max: {np.max(sos_values):.4f}")
     
-    if metrics_data['DiS_dpp']:
-        print(f"\n  DiS-DPP (Diversity of Stance - DPP):")
-        print(f"    Mean: {np.mean(metrics_data['DiS_dpp']):.4f} | Std: {np.std(metrics_data['DiS_dpp']):.4f}")
-    
     if metrics_data['DiS_avg']:
         print(f"\n  DiS-Avg (Diversity of Stance - Average):")
         print(f"    Mean: {np.mean(metrics_data['DiS_avg']):.4f} | Std: {np.std(metrics_data['DiS_avg']):.4f}")
@@ -125,20 +118,12 @@ def summarize_arc_metrics(results):
         print(f"    Mean: {np.mean(uii_values):.4f} | Std: {np.std(uii_values):.4f}")
         print(f"    Min: {np.min(uii_values):.4f} | Max: {np.max(uii_values):.4f}")
     
-    if metrics_data['internal_del_pe']:
-        print(f"\n  Internal Δ-PE (Change in Predictive Entropy):")
-        print(f"    Mean: {np.mean(metrics_data['internal_del_pe']):.4f} | Std: {np.std(metrics_data['internal_del_pe']):.4f}")
-    
     print("\nEXTERNAL RELIANCE DIMENSION:")
     print("-" * 80)
     if uei_values:
         print(f"  UEI (Uncertainty in External Informativeness):")
         print(f"    Mean: {np.mean(uei_values):.4f} | Std: {np.std(uei_values):.4f}")
         print(f"    Min: {np.min(uei_values):.4f} | Max: {np.max(uei_values):.4f}")
-    
-    if metrics_data['external_del_pe']:
-        print(f"\n  External Δ-PE (Change in Predictive Entropy):")
-        print(f"    Mean: {np.mean(metrics_data['external_del_pe']):.4f} | Std: {np.std(metrics_data['external_del_pe']):.4f}")
     
     print("\nINDIVIDUAL RELIANCE DIMENSION:")
     print("-" * 80)

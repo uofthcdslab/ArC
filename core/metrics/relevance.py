@@ -50,21 +50,21 @@ class DiSMetric(BaseMetric):
     
     def compute(self, sample_data: Dict[str, Any]) -> Dict[str, float]:
         """
-        Compute DiS using DPP and average methods
+        Compute DiS using average method
         
         Args:
             sample_data: Contains initial_reasons, initial_reasons_confidences, 
                         and initial_reasons_sims_reasons
             
         Returns:
-            Dictionary with DiS_dpp and DiS_avg scores
+            Dictionary with DiS_avg score
         """
         reasons = sample_data.get('initial_reasons', [])
         confidences = sample_data.get('initial_reasons_confidences', [])
         sims_reasons = sample_data.get('initial_reasons_sims_reasons', [])
         
         if len(reasons) <= 1:
-            return {'DiS_dpp': np.nan, 'DiS_avg': np.nan}
+            return {'DiS_avg': np.nan}
         
         # Create probability weights and similarity matrix
         prob_weights = hp.convert_list_to_col_matrix(confidences)
@@ -72,13 +72,10 @@ class DiSMetric(BaseMetric):
         
         if similarity_matrix.shape != prob_weights.shape:
             self.log_error(f"Shape mismatch: similarity_matrix {similarity_matrix.shape} vs prob_weights {prob_weights.shape}")
-            return {'DiS_dpp': np.nan, 'DiS_avg': np.nan}
-        
-        # Compute DiS-DPP (determinant)
-        dis_dpp = np.linalg.det(similarity_matrix * prob_weights)
+            return {'DiS_avg': np.nan}
         
         # Compute DiS-Avg
         tot_nas = 0
         dis_avg = hp.get_average_from_matrix((1 - similarity_matrix) * prob_weights, tot_nas=tot_nas)
         
-        return {'DiS_dpp': dis_dpp, 'DiS_avg': dis_avg}
+        return {'DiS_avg': dis_avg}
