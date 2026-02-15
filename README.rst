@@ -1,6 +1,7 @@
 
 Argument-Based Consistency in Toxicity Explanations of LLMs
 ===========================================================
+|DOI|
 
 .. image:: https://github.com/uofthcdslab/ArC/blob/main/utils/arc_overall_flow.png
   :align: center
@@ -136,7 +137,10 @@ Roadmap:
 
 Citing:
 =======
-Bibtex::
+
+**BibTeX:**
+
+.. code-block:: bibtex
 
 	@article{kommiya2025argument,
 	  title={Argument-Based Consistency in Toxicity Explanations of LLMs},
@@ -145,3 +149,10 @@ Bibtex::
 	  pages={arXiv--2506},
 	  year={2025}
 	}
+
+**Text:**
+Mothilal, R. K., Roy, J., Ahmed, S. I., & Guha, S. (2025). Argument-Based Consistency in Toxicity Explanations of LLMs. arXiv preprint arXiv:2506.19113.
+
+.. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.18652116.svg
+   :target: https://doi.org/10.5281/zenodo.18652116
+   :alt: DOI
