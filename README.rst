@@ -1,5 +1,5 @@
-Argument-Based Consistency in Toxicity Explanations of LLMs
-===========================================================
+ArC: Argument-Based Consistency in Toxicity Explanations of LLMs
+================================================================
 |DOI|
 
 .. image:: https://github.com/uofthcdslab/ArC/blob/main/utils/arc_overall_flow.png
