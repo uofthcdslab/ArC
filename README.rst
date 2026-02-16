@@ -1,4 +1,3 @@
-
 Argument-Based Consistency in Toxicity Explanations of LLMs
 ===========================================================
 |DOI|
