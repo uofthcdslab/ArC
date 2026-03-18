@@ -50,12 +50,12 @@ class DataLoader:
         return data
     
     def load_for_conditional_generation(self, model_name, explcit_prompting, **kwargs):
-        """Load input data for LLM generation - to evaluate internal/external reliance"""
-        
+        """Load input data for LLM generation - to evaluate uphold_reasons_internal/uphold_reasons_external reliance"""
+
         # the reason why the data is stored in folders is to accomodate batched loading in the future
-        directory_path = Path(PARSE_OUTPUT_PATH+'/'+model_name.split('/')[1]+'/'+self.data_name+'/'+"initial"+explcit_prompting)
+        directory_path = Path(PARSE_OUTPUT_PATH+'/'+model_name.split('/')[1]+'/'+self.data_name+'/'+"justify"+explcit_prompting)
         directory_path.mkdir(parents=True, exist_ok=True)
         file_path = directory_path / ("extracted_info.pkl")
         with file_path.open("rb") as f:
-            extracted_inputs_reasons = pickle.load(f)  
+            extracted_inputs_reasons = pickle.load(f)
         return extracted_inputs_reasons

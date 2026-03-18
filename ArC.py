@@ -43,7 +43,7 @@ def compute_arc_metrics(config: ArCConfig):
             parsed_output_dict = hp.get_parsed_outputs(model_name, data_name, config.explicit_prompting)
             
             # Process each sample
-            for sample_ix in tqdm(range(len(parsed_output_dict['initial']['input_texts']))):
+            for sample_ix in tqdm(range(len(parsed_output_dict['justify']['input_texts']))):
                 # Compute all metrics for this sample
                 sample_result = service.compute_sample(
                     sample_ix, model_name, data_name,

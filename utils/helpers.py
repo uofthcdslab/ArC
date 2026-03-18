@@ -18,39 +18,39 @@ def extract_first_number(filename):
 
 def get_cleaned_inputs_outputs(this_batch_input_texts, this_batch_llm_texts, stage, logger):
     logger.info("Starting cleaning of inputs and outputs")
-    
+
     cleaned_inputs = []
     cleaned_outputs = []
-    
+
     if not this_batch_input_texts or not this_batch_llm_texts:
         logger.warning("Empty input or LLM texts received")
         return ["NO INPUT"], ["NO OUTPUT"]
-        
+
     for sample_ix in range(len(this_batch_input_texts)):
         if sample_ix >= len(this_batch_llm_texts):
             logger.warning(f"Index {sample_ix} out of range for LLM texts")
             cleaned_outputs.append("NO OUTPUT")
             cleaned_inputs.append("NO INPUT")
             continue
-            
+
         output_text = this_batch_llm_texts[sample_ix] or ""
         input_text = this_batch_input_texts[sample_ix] or ""
-        
+
         logger.debug(f"Processing sample {sample_ix}")
-        
+
         cleaned_outputs.append(output_text[len(input_text):] if len(output_text) > len(input_text) else "")
-        
+
         try:
-            if stage == 'initial':
+            if stage == 'justify':
                 cleaned_input = input_text.split("TEXT: \n")[1].split("assistant")[0]
             else:
                 cleaned_input = input_text.split("TEXT: \n")[1].split("\n\nREASON")[0]
         except Exception as e:
             logger.error(f"Error cleaning input text: {str(e)}")
             cleaned_input = input_text
-            
+
         cleaned_inputs.append(cleaned_input)
-    
+
     logger.info(f"Completed cleaning {len(cleaned_inputs)} samples")
     return cleaned_inputs, cleaned_outputs 
 
@@ -112,17 +112,17 @@ def get_only_decisions(clean_sentence, logger):
 
 def extract_reasons(gen_texts_list, decision_sentences, stage, logger):
     logger.info("Starting reasons extraction")
-        
+
     reasons = []
     pattern = r'(?:^\d+[.)]\s*|^[-*]\s*)([\s\S]+?)(?=\n^\d+[.)]\s*|\n^[-*]\s*|\Z)'
-    
+
     for i, sample in enumerate(gen_texts_list):
         logger.debug(f"Processing sample {i}")
-        
+
         sample = sample.replace(decision_sentences[i], '')
         reasons_in_this_sample = re.findall(pattern, sample, re.MULTILINE)
         reasons_in_this_sample = [s.strip().split('\n\n', 1)[0] for s in reasons_in_this_sample if s.strip() not in ['', '*'] and len(s.strip()) > 20]
-        
+
         logger.debug(f"Removing incorrect reasons in sample {i}")
         del_ix = []
         for jx, item in enumerate(reasons_in_this_sample):
@@ -131,17 +131,17 @@ def extract_reasons(gen_texts_list, decision_sentences, stage, logger):
                 break
         if len(del_ix)>0:
             del reasons_in_this_sample[del_ix[0]]
-        
-        if stage != 'initial':
+
+        if stage != 'justify':
             reasons_in_this_sample = [reason for reason in reasons_in_this_sample if 'additional reason' not in reason.lower()]
-        
+
         if not reasons_in_this_sample:
             logger.warning(f"No reasons found in sample {i}, using placeholder")
             reasons_in_this_sample = []
-            
+
         logger.debug(f"Found {len(reasons_in_this_sample)} reasons in sample {i}")
         reasons.append(reasons_in_this_sample)
-    
+
     logger.info(f"Completed reasons extraction for {len(reasons)} samples")
     return reasons
 
@@ -205,14 +205,14 @@ def get_additional_decisions(sims_hp, decision_sentences):
 
 def get_output_tokens(model_name, data_name, explicit_prompting):
     output_tokens = {}
-    stage_list = ['initial', 'internal', 'external', 'individual']
+    stage_list = ['justify', 'uphold_reasons_internal', 'uphold_reasons_external', 'uphold_stance']
     if explicit_prompting == '': stage_list = stage_list[:-1]
-    
-    for stage in stage_list:            
+
+    for stage in stage_list:
         output_tokens[stage] = []
-        if stage == 'individual':
+        if stage == 'uphold_stance':
             explicit_prompting = ''
-            
+
         directory_path = Path(GEN_OUTPUT_PATH + "/" + model_name.split('/')[1]+'/'+ data_name+'/'+ stage + explicit_prompting)
         pickle_files = sorted(directory_path.glob("*.pkl"), key=extract_first_number)
         for file in pickle_files:
@@ -220,36 +220,36 @@ def get_output_tokens(model_name, data_name, explicit_prompting):
             if os.path.basename(file) == 'samples_1-0.pkl':
                 continue
             with open(file, "rb") as f:
-                llm_generation = pickle.load(f) 
-                
+                llm_generation = pickle.load(f)
+
             if len(llm_generation['generated_texts']) == 0:
                 output_tokens[stage].append([])
                 continue
-            
-            if stage == 'individual':
+
+            if stage == 'uphold_stance':
                 for sample_ix in range(len(llm_generation['generated_texts'])):
                     one_sample_outputs = []
                     for ind_ix in range(len(llm_generation['generated_texts'][sample_ix])):
                         inpt = llm_generation['input_tokens'][sample_ix][ind_ix]
                         outt = llm_generation['output_tokens'][sample_ix][ind_ix]
                         one_sample_outputs.append(outt[len(inpt):])
-                    output_tokens[stage].append(one_sample_outputs)   
-            else:                
+                    output_tokens[stage].append(one_sample_outputs)
+            else:
                 for batch_ix in range(len(llm_generation['generated_texts'])):
                     for sample_ix in range(len(llm_generation['generated_texts'][batch_ix])):
                         inpt = llm_generation['input_tokens'][batch_ix][sample_ix]
                         outt = llm_generation['output_tokens'][batch_ix][sample_ix]
                         output_tokens[stage].append(outt[len(inpt):])
-                        
+
     return output_tokens
 
 def get_parsed_outputs(model_name, data_name, explicit_prompting):
     parsed_outputs = {}
-    stage_list = ['initial', 'internal', 'external', 'individual']
+    stage_list = ['justify', 'uphold_reasons_internal', 'uphold_reasons_external', 'uphold_stance']
     if explicit_prompting == '': stage_list = stage_list[:-1]
-    
+
     for stage in stage_list:
-        if stage == 'individual':
+        if stage == 'uphold_stance':
             explicit_prompting = ''
         file_path = Path(PARSE_OUTPUT_PATH + "/" + model_name.split('/')[1]+'/'+ data_name+'/'+ stage + explicit_prompting + '/extracted_info.pkl')
         with file_path.open("rb") as f:

@@ -46,9 +46,9 @@ def summarize_arc_metrics(results):
     
     # Collect metrics
     metrics_data = {
-        'initial_decision_confidence': [],
-        'internal_decision_confidence': [],
-        'external_decision_confidence': [],
+        'justify_decision_confidence': [],
+        'uphold_reasons_internal_decision_confidence': [],
+        'uphold_reasons_external_decision_confidence': [],
         'DiS_avg': []
     }
     
@@ -139,7 +139,7 @@ def summarize_arc_metrics(results):
     
     print("\nDECISION CONFIDENCE:")
     print("-" * 80)
-    for conf_type in ['initial', 'internal', 'external']:
+    for conf_type in ['justify', 'uphold_reasons_internal', 'uphold_reasons_external']:
         key = f'{conf_type}_decision_confidence'
         if metrics_data[key]:
             print(f"  {conf_type.capitalize()}: Mean={np.mean(metrics_data[key]):.4f}, Std={np.std(metrics_data[key]):.4f}")

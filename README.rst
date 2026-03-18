@@ -42,7 +42,7 @@ View summary statistics for a specific model/dataset combination.
 
 **3. Explore Results (Jupyter Notebook):**
 
-See ``demo_arc_metrics.ipynb`` for an interactive demonstration of how to use the ArC classes and visualize metric outputs.
+See `demo_arc_metrics.ipynb <https://github.com/uofthcdslab/ArC/blob/main/demo_arc_metrics.ipynb>`_ for an interactive demonstration of how to use the ArC classes and visualize metric outputs.
 
 
 Reproducing Full Pipeline:
@@ -67,15 +67,15 @@ Reproducing Full Pipeline:
 
 In the paper, we describe a three-stage pipeline to compute **ArC** metrics. The pipeline consists of:
 
-1. Stage **JUSTIFY** where LLMs generate explanations for their toxicity decisions (denoted by ``stage="initial"``).
-2. Stage **UPHOLD-REASONS** where LLMs generate post-hoc explanations to assess the sufficiency of reasons provided in the **JUSTIFY** stage (denoted by ``stage="internal"`` or ``stage="external"``).
-3. Stage **UPHOLD-STACE** where LLMs generate post-hoc explanations to assess the sufficiency and necessity of individual reasons of **JUSTIFY** stage (denoted by ``stage="individual"``).
+1. Stage **JUSTIFY** where LLMs generate explanations for their toxicity decisions (denoted by ``stage="justify"``).
+2. Stage **UPHOLD-REASONS** where LLMs generate post-hoc explanations to assess the sufficiency of reasons provided in the **JUSTIFY** stage (denoted by ``stage="uphold_reasons_internal"`` or ``stage="uphold_reasons_external"``).
+3. Stage **UPHOLD-STANCE** where LLMs generate post-hoc explanations to assess the sufficiency and necessity of individual reasons of **JUSTIFY** stage (denoted by ``stage="uphold_stance"``).
 
-To implement this, repeat the following steps with each of the four values for the parameter ``stage``: ``initial``, ``internal``, ``external``, and ``individual`` (only the ``initial`` stage has to be run first; the rest can be run in any order):
+To implement this, repeat the following steps with each of the four values for the parameter ``stage``: ``justify``, ``uphold_reasons_internal``, ``uphold_reasons_external``, and ``uphold_stance`` (only the ``justify`` stage has to be run first; the rest can be run in any order):
 
-1. Run `generate.py <https://github.com/uofthcdslab/ArC/blob/main/generate.py>`_ with ``--generation_stage=initial/internal/external/individual`` and other optional changes to the generation hyperparameters. 
-2. LLM outputs (tokens, token entropies, and texts) will be generated and stored in ``llm_generated_data/<model_name>/<data_name>/<stage>``. 
-3. Run `parse.py <https://github.com/uofthcdslab/ArC/blob/main/parse.py>`_ with ``stage=initial/internal/external/individual`` and other optional parameters to extract LLM decisions, reasons, and other relevant information for computing ArC.
+1. Run `generate.py <https://github.com/uofthcdslab/ArC/blob/main/generate.py>`_ with ``--generation_stage=justify/uphold_reasons_internal/uphold_reasons_external/uphold_stance`` and other optional changes to the generation hyperparameters.
+2. LLM outputs (tokens, token entropies, and texts) will be generated and stored in ``llm_generated_data/<model_name>/<data_name>/<stage>``.
+3. Run `parse.py <https://github.com/uofthcdslab/ArC/blob/main/parse.py>`_ with ``stage=justify/uphold_reasons_internal/uphold_reasons_external/uphold_stance`` and other optional parameters to extract LLM decisions, reasons, and other relevant information for computing ArC.
 4. The parsed outputs will be stored in ``parsed_data/<model_name>/<data_name>/<stage>``.
 
 

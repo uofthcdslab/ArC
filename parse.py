@@ -62,7 +62,7 @@ class ArCParser:
         self.cache_dir = args.cache_dir if args.cache_dir != '' else None
         self.similarity_model = args.similarity_model
         self.stage = args.stage
-        self.explicit_prompting = '_explicit' if args.explicit_prompting == 'True' and self.stage != 'individual' else ''
+        self.explicit_prompting = '_explicit' if args.explicit_prompting == 'True' and self.stage != 'uphold_stance' else ''
         
         # output variables
         self.total_samples = 0
@@ -139,48 +139,48 @@ class ArCParser:
             with open(file, "rb") as f:
                 llm_generation = pickle.load(f) 
                     
-            if self.stage == 'individual' and len(llm_generation['generated_texts']) == 0:
+            if self.stage == 'uphold_stance' and len(llm_generation['generated_texts']) == 0:
                 self.add_empty_values()
                 continue
-            
+
             # looping through each batch
             total_batches = len(llm_generation['generated_texts'])
             self.logger.info(f"Found {total_batches} batches in file")
-            if self.stage == 'individual': self.create_batch_lists()
-            
-            for batch_ix in range(total_batches): # batch_ix is the equivalent of sample_ix for individual
+            if self.stage == 'uphold_stance': self.create_batch_lists()
+
+            for batch_ix in range(total_batches): # batch_ix is the equivalent of sample_ix for uphold_stance
                 total_samples_this_batch = len(llm_generation['generated_texts'][batch_ix])
                 self.total_samples += total_samples_this_batch
                 self.logger.debug(f"Processing batch {batch_ix} with {total_samples_this_batch} samples")
-                
+
                 # input texts
                 this_batch_input_texts = self.tokenizer.batch_decode(llm_generation['input_tokens'][batch_ix], skip_special_tokens=True)
                 this_batch_input_texts, this_batch_llm_texts = hp.get_cleaned_inputs_outputs(this_batch_input_texts, llm_generation['generated_texts'][batch_ix], self.stage, self.logger)
-                self.input_texts_batch.extend(this_batch_input_texts) if self.stage == 'individual' else self.input_texts.extend(this_batch_input_texts)
-                    
+                self.input_texts_batch.extend(this_batch_input_texts) if self.stage == 'uphold_stance' else self.input_texts.extend(this_batch_input_texts)
+
                 # decisions and reasons
                 decisions, decision_sentences = hp.extract_decisions(this_batch_llm_texts, self.logger)
-                self.decisions_batch.extend(decisions) if self.stage == 'individual' else self.decisions.extend(decisions)
-                self.decision_sentences_batch.extend(decision_sentences) if self.stage == 'individual' else self.decision_sentences.extend(decision_sentences)
+                self.decisions_batch.extend(decisions) if self.stage == 'uphold_stance' else self.decisions.extend(decisions)
+                self.decision_sentences_batch.extend(decision_sentences) if self.stage == 'uphold_stance' else self.decision_sentences.extend(decision_sentences)
                 decisions_tokens = self.tokenizer(decision_sentences, add_special_tokens=False)['input_ids']
                 reasons = hp.extract_reasons(this_batch_llm_texts, decision_sentences, self.stage, self.logger)
-                self.reasons_batch.extend(reasons) if self.stage == 'individual' else self.reasons.extend(reasons)
-                
+                self.reasons_batch.extend(reasons) if self.stage == 'uphold_stance' else self.reasons.extend(reasons)
+
                 # similarity scores with input and between reasons
                 self.logger.debug("Computing similarity scores")
                 with_input, between_reasons = self.sims_hp.get_input_reasons_similarities(this_batch_input_texts, reasons)
-                self.sims_input_batch.extend(with_input) if self.stage == 'individual' else self.sims_input.extend(with_input)
-                self.sims_reasons_batch.extend(between_reasons) if self.stage == 'individual' else self.sims_reasons.extend(between_reasons)
-                
+                self.sims_input_batch.extend(with_input) if self.stage == 'uphold_stance' else self.sims_input.extend(with_input)
+                self.sims_reasons_batch.extend(between_reasons) if self.stage == 'uphold_stance' else self.sims_reasons.extend(between_reasons)
+
                 # token-wise predictive entropies
                 self.logger.debug("Processing entropy values")
-                self.entropies_logits_batch.extend([entropy.clone() for entropy in llm_generation['logits'][batch_ix]]) if self.stage == 'individual' else self.entropies_logits.extend([entropy.clone() for entropy in llm_generation['logits'][batch_ix]])
-                self.entropies_scores_batch.extend([entropy.clone() for entropy in llm_generation['scores'][batch_ix]]) if self.stage == 'individual' else self.entropies_scores.extend([entropy.clone() for entropy in llm_generation['scores'][batch_ix]])
-                
+                self.entropies_logits_batch.extend([entropy.clone() for entropy in llm_generation['logits'][batch_ix]]) if self.stage == 'uphold_stance' else self.entropies_logits.extend([entropy.clone() for entropy in llm_generation['logits'][batch_ix]])
+                self.entropies_scores_batch.extend([entropy.clone() for entropy in llm_generation['scores'][batch_ix]]) if self.stage == 'uphold_stance' else self.entropies_scores.extend([entropy.clone() for entropy in llm_generation['scores'][batch_ix]])
+
                 # extract toxicity decision and reasons list for each data point - TODO: modify the below code for batch processing here
                 for sample_ix in range(total_samples_this_batch):
                     self.logger.debug(f"Processing sample {sample_ix} in batch {batch_ix} in batch {batch_ix}")
-                    
+
                     # extract (start, end) reason and decision indices - to get relevant entropy values
                     if not reasons[sample_ix]:
                         reasons_tokens = []
@@ -189,19 +189,19 @@ class ArCParser:
                     this_sample_input_len = len(llm_generation['input_tokens'][batch_ix][sample_ix])
                     target_ids = llm_generation['output_tokens'][batch_ix][sample_ix].clone()[this_sample_input_len:]
                     reasons_indices, decision_indices = hp.extract_indices_for_one_sample(reasons_tokens, decisions_tokens[sample_ix], target_ids.to('cpu'), self.logger)
-                    self.decision_indices_batch.append(decision_indices) if self.stage == 'individual' else self.decision_indices.extend(decision_indices)
-                    self.reasons_indices_batch.append(reasons_indices) if self.stage == 'individual' else self.reasons_indices.extend(reasons_indices)
-                    
+                    self.decision_indices_batch.append(decision_indices) if self.stage == 'uphold_stance' else self.decision_indices.extend(decision_indices)
+                    self.reasons_indices_batch.append(reasons_indices) if self.stage == 'uphold_stance' else self.reasons_indices.extend(reasons_indices)
+
                     # similarity-based relevance for decision and reasons
                     self.logger.debug(f"Computing relevance scores for sample {sample_ix}")
-                    self.decision_relevances_batch.append(self.get_relevance_scores_for_sentence(torch.tensor(decisions_tokens[sample_ix]), decisions[sample_ix])) if self.stage == 'individual' else self.decision_relevances.append(self.get_relevance_scores_for_sentence(torch.tensor(decisions_tokens[sample_ix]), decisions[sample_ix]))
+                    self.decision_relevances_batch.append(self.get_relevance_scores_for_sentence(torch.tensor(decisions_tokens[sample_ix]), decisions[sample_ix])) if self.stage == 'uphold_stance' else self.decision_relevances.append(self.get_relevance_scores_for_sentence(torch.tensor(decisions_tokens[sample_ix]), decisions[sample_ix]))
                     one_reason_relevance = []
                     for reason_ix in range(len(reasons_tokens)):
                         rel = self.get_relevance_scores_for_sentence(torch.tensor(reasons_tokens[reason_ix]), reasons[sample_ix][reason_ix])
                         one_reason_relevance.append(rel)
-                    self.reasons_relevances_batch.append(one_reason_relevance) if self.stage == 'individual' else self.reasons_relevances.extend(one_reason_relevance)
-                     
-            self.add_batch() if self.stage == 'individual' else None # add rsults of each batch
+                    self.reasons_relevances_batch.append(one_reason_relevance) if self.stage == 'uphold_stance' else self.reasons_relevances.extend(one_reason_relevance)
+
+            self.add_batch() if self.stage == 'uphold_stance' else None # add rsults of each batch
                                                        
         self.logger.info(f"Processed {file_count} files with a total of {self.total_samples} samples")
         if len(self.input_texts) > 0:
@@ -240,7 +240,7 @@ class ArCParser:
         torch.cuda.empty_cache()
 
 def do_sanity_checks(model_name, data_name, decisions, decision_sentences, reasons, stage, explicit_prompting, logger):
-    if stage == 'individual':
+    if stage == 'uphold_stance':
         decisions = [item for sublist in decisions for item in sublist]
         decision_sentences = [item for sublist in decision_sentences for item in sublist]
         reasons = [item for sublist in reasons for item in sublist]
@@ -309,7 +309,7 @@ if __name__ == "__main__":
         "--similarity_model", type=str, required=True, default='', help="sentence similarity model"
     )
     parser.add_argument(
-        "--stage", type=str, required=True, help="initial, internal, or external"
+        "--stage", type=str, required=True, help="justify, uphold_reasons_internal, uphold_reasons_external, or uphold_stance"
     )
     parser.add_argument(
         "--explicit_prompting", type=str, required=False, default='True', help="prompt with explicit instructions"

@@ -56,7 +56,7 @@ class Generator:
         self.cache_dir = args.cache_dir if args.cache_dir != '' else None
         self.generation_stage = args.generation_stage
         self.select_new_dataset_samples = True if args.select_new_dataset_samples == 'True' else False
-        self.explicit_prompting = '_explicit' if args.explicit_prompting == 'True' and self.generation_stage != 'individual' else ''
+        self.explicit_prompting = '_explicit' if args.explicit_prompting == 'True' and self.generation_stage != 'uphold_stance' else ''
         
     def set_required_seeds(self):
         self.logger.info(f"Setting random seeds to {self.seed_value} for reproducibility")
@@ -85,8 +85,8 @@ class Generator:
             self.logger.debug("Loaded prompt instructions")
 
         data_loader = DataLoader(self.data_name, total_samples=self.data_size, batch_size=self.batch_size, random_state=self.seed_value, select_new_dataset_samples=self.select_new_dataset_samples)
-        if self.generation_stage == 'initial': # initial generation
-            self.logger.info("Loading data for initial generation")
+        if self.generation_stage == 'justify': # justify generation
+            self.logger.info("Loading data for justify generation")
             raw_data = data_loader.load_for_initial_generation(**data_args)
             self.logger.info(f"DATASET SIZE: {len(raw_data)}")
             input_data = raw_data.groupby('batch')['input_text'].apply(list).tolist()
@@ -96,21 +96,21 @@ class Generator:
                         tokenize=False,
                         add_generation_prompt=True,
                         disable_system_prompt=True
-                    ) for text in sublist] 
+                    ) for text in sublist]
                 for sublist in input_data]
-        
-        elif self.generation_stage == 'individual':
-            self.logger.info(f"Loading data for {self.generation_stage} reliance generation")   
-            self.logger.info(f"Loading reasons generated from explicit prompting")   
+
+        elif self.generation_stage == 'uphold_stance':
+            self.logger.info(f"Loading data for {self.generation_stage} reliance generation")
+            self.logger.info(f"Loading reasons generated from explicit prompting")
             extracted_info = data_loader.load_for_conditional_generation(model_name=self.model_name, explcit_prompting='_explicit', **data_args)
             input_data = []
             for ix in range(len(extracted_info['input_texts'])):
                 one_sample_batch = []
-                system_prompt = instructions["for_individual_reliance"]
+                system_prompt = instructions["for_uphold_stance_reliance"]
                 if extracted_info['decisions'][ix] == 'non-toxic':
                     for rix in range(len(extracted_info['reasons'][ix])):
                         system_prompt = system_prompt.replace("Given below is a toxic TEXT and a REASON explaining why it is toxic. Is any additional reason required to justify why the TEXT is toxic?",
-                                                            "Given below is a non-toxic TEXT and a list of REASON(S) explaining why it is not toxic. Is any additional reason required to justify why the TEXT is not toxic?")            
+                                                            "Given below is a non-toxic TEXT and a list of REASON(S) explaining why it is not toxic. Is any additional reason required to justify why the TEXT is not toxic?")
                         modified_reasons = extracted_info['reasons'][ix][:rix] + extracted_info['reasons'][ix][rix+1:]
                         one_sample_batch.append(self.tokenizer.apply_chat_template(
                             [{"role": "system", "content": system_prompt},
@@ -127,10 +127,10 @@ class Generator:
                             tokenize=False,
                             add_generation_prompt=True,
                             disable_system_prompt=True
-                        ))    
+                        ))
                 input_data.append(one_sample_batch)
-         
-        else: # conditional generation - for internal/external reliances
+
+        else: # conditional generation - for uphold_reasons_internal/uphold_reasons_external reliances
             self.logger.info(f"Loading data for {self.generation_stage} reliance generation")
             extracted_info = data_loader.load_for_conditional_generation(model_name=self.model_name, explcit_prompting=self.explicit_prompting, **data_args)
             input_data = []
@@ -142,7 +142,7 @@ class Generator:
                         system_prompt = system_prompt.replace("required to justify why the TEXT is toxic", "required to justify why the TEXT is not toxic")
                 else:
                     system_prompt = instructions["for_"+self.generation_stage+"_reliance"+self.explicit_prompting]
-                
+
                 input_data.append(self.tokenizer.apply_chat_template(
                     [{"role": "system", "content": system_prompt},
                     {"role": "user", "content": self.format_inputs_as_chat(extracted_info['input_texts'][ix], extracted_info['reasons'][ix])}],
@@ -226,11 +226,11 @@ class Generator:
                     generated_text.append(self.tokenizer.batch_decode(generations.sequences.to("cpu"), skip_special_tokens=True))
                     end_ix += len(batch_input)
                         
-                    if (self.generation_stage == 'individual') or ((self.generation_stage != 'individual') and (end_ix - start_ix) >= self.write_frequency):
+                    if (self.generation_stage == 'uphold_stance') or ((self.generation_stage != 'uphold_stance') and (end_ix - start_ix) >= self.write_frequency):
                         self.logger.info(f"Writing results for samples {start_ix+1}-{end_ix}")
                         directory_path = Path(GEN_OUTPUT_PATH+"/"+self.model_name.split('/')[1]+'/'+self.data_name+'/'+self.generation_stage+self.explicit_prompting)
                         directory_path.mkdir(parents=True, exist_ok=True)
-                        if self.generation_stage == 'individual':
+                        if self.generation_stage == 'uphold_stance':
                             file_path = directory_path / ("samples_"+str(batch_idx+1)+"-"+str(len(batch_input))+".pkl")
                         else:
                             file_path = directory_path / ("samples_"+str(start_ix+1)+"-"+str(end_ix)+".pkl")
@@ -239,7 +239,7 @@ class Generator:
                         output_tokens = []
                         logits_entropies = []
                         scores_entropies = []
-                        generated_text = [] 
+                        generated_text = []
                         start_ix = end_ix
                 
                 except Exception as e:
@@ -247,7 +247,7 @@ class Generator:
                     self.logger.info(f"Saving partial results for samples {start_ix+1}-{end_ix}")
                     directory_path = Path(GEN_OUTPUT_PATH+"/"+self.model_name.split('/')[1]+'/'+self.data_name+'/'+self.generation_stage+self.explicit_prompting)
                     directory_path.mkdir(parents=True, exist_ok=True)
-                    if self.generation_stage == 'individual':
+                    if self.generation_stage == 'uphold_stance':
                         file_path = directory_path / ("samples_"+str(batch_idx+1)+"-"+str(len(batch_input))+".pkl")
                     else:
                         file_path = directory_path / ("samples_"+str(start_ix+1)+"-"+str(end_ix)+".pkl")
@@ -258,7 +258,7 @@ class Generator:
                 self.logger.info(f"Saving final results for samples {start_ix+1}-{end_ix}")
                 directory_path = Path(GEN_OUTPUT_PATH+"/"+self.model_name.split('/')[1]+'/'+self.data_name+'/'+self.generation_stage+self.explicit_prompting)
                 directory_path.mkdir(parents=True, exist_ok=True)
-                if self.generation_stage == 'individual':
+                if self.generation_stage == 'uphold_stance':
                     file_path = directory_path / ("samples_"+str(batch_idx+1)+"-"+str(len(batch_input))+".pkl")
                 else:
                     file_path = directory_path / ("samples_"+str(start_ix+1)+"-"+str(end_ix)+".pkl")
@@ -323,7 +323,7 @@ if __name__ == "__main__":
         "--cache_dir", type=str, required=False, default='', help="HF cache dir to store model data"
     )
     parser.add_argument(
-        "--generation_stage", type=str, required=True, help="initial, internal, external, or individual"
+        "--generation_stage", type=str, required=True, help="justify, uphold_reasons_internal, uphold_reasons_external, or uphold_stance"
     )
     parser.add_argument(
         "--select_new_dataset_samples", type=str, required=False, default='False', help="select new samples or not"
