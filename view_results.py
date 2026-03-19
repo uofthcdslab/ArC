@@ -35,15 +35,15 @@ def load_arc_results(model_name, data_name, results_path="arc_results"):
     
     return results
 
-def summarize_arc_metrics(results):
+def summarize_arc_metrics(results, model_name=None, data_name=None):
     """Summarize ArC metrics across all samples"""
-    
+
     if not results:
         print("ERROR: No results to summarize")
         return None
-    
+
     summary = {}
-    
+
     # Collect metrics
     metrics_data = {
         'justify_decision_confidence': [],
@@ -51,14 +51,18 @@ def summarize_arc_metrics(results):
         'uphold_reasons_external_decision_confidence': [],
         'DiS_avg': []
     }
-    
+
     # SoS, UII, UEI, RS, RN metrics (per-reason)
     sos_values = []
     uii_values = []
     uei_values = []
     rs_values = []
     rn_values = []
-    
+
+    # Count toxic vs non-toxic samples
+    toxic_count = 0
+    nontoxic_count = 0
+
     for result in results:
         # Single-value metrics
         for key in metrics_data.keys():
@@ -91,13 +95,26 @@ def summarize_arc_metrics(results):
         
         # RN (Reason Necessity)
         if 'RN' in result:
+            nontoxic_count += 1
             for subsample_idx, value in result['RN'].items():
                 if not pd.isna(value):
                     rn_values.append(value)
-    
+        elif 'RS' in result:
+            toxic_count += 1
+
     # Calculate summary statistics
     print("\n" + "="*80)
     print("ArC METRICS SUMMARY")
+    print("="*80)
+
+    if model_name:
+        print(f"Model: {model_name}")
+    if data_name:
+        print(f"Dataset: {data_name}")
+    print(f"Total Samples: {len(results)}")
+    if toxic_count > 0 or nontoxic_count > 0:
+        print(f"  - Toxic samples: {toxic_count}")
+        print(f"  - Non-toxic samples: {nontoxic_count}")
     print("="*80)
     
     print("\nRELEVANCE DIMENSION:")
@@ -128,14 +145,16 @@ def summarize_arc_metrics(results):
     print("\nINDIVIDUAL RELIANCE DIMENSION:")
     print("-" * 80)
     if rs_values:
-        print(f"  RS (Reason Sufficiency):")
+        print(f"  RS (Reason Sufficiency) - Toxic samples:")
         print(f"    Mean: {np.mean(rs_values):.4f} | Std: {np.std(rs_values):.4f}")
         print(f"    Min: {np.min(rs_values):.4f} | Max: {np.max(rs_values):.4f}")
-    
+        print(f"    Count: {len(rs_values)} reason evaluations from {toxic_count} samples")
+
     if rn_values:
-        print(f"\n  RN (Reason Necessity):")
+        print(f"\n  RN (Reason Necessity) - Non-toxic samples:")
         print(f"    Mean: {np.mean(rn_values):.4f} | Std: {np.std(rn_values):.4f}")
         print(f"    Min: {np.min(rn_values):.4f} | Max: {np.max(rn_values):.4f}")
+        print(f"    Count: {len(rn_values)} reason evaluations from {nontoxic_count} samples")
     
     print("\nDECISION CONFIDENCE:")
     print("-" * 80)
@@ -144,17 +163,17 @@ def summarize_arc_metrics(results):
         if metrics_data[key]:
             print(f"  {conf_type.capitalize()}: Mean={np.mean(metrics_data[key]):.4f}, Std={np.std(metrics_data[key]):.4f}")
     
-    print("\n" + "="*80)
-    print(f"Total samples analyzed: {len(results)}")
-    print("="*80 + "\n")
-    
+    print("\n" + "="*80 + "\n")
+
     return {
         'SoS': sos_values,
         'UII': uii_values,
         'UEI': uei_values,
         'RS': rs_values,
         'RN': rn_values,
-        'metrics_data': metrics_data
+        'metrics_data': metrics_data,
+        'toxic_count': toxic_count,
+        'nontoxic_count': nontoxic_count
     }
 
 def view_sample_detail(results, sample_idx):
@@ -206,7 +225,7 @@ if __name__ == "__main__":
             view_sample_detail(results, args.sample_idx)
         else:
             # View summary
-            summary = summarize_arc_metrics(results)
+            summary = summarize_arc_metrics(results, args.model_name, args.data_name)
     else:
         print("\nAvailable models and datasets:")
         results_path = Path(args.results_path)

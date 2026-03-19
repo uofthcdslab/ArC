@@ -189,8 +189,8 @@ class ArCParser:
                     this_sample_input_len = len(llm_generation['input_tokens'][batch_ix][sample_ix])
                     target_ids = llm_generation['output_tokens'][batch_ix][sample_ix].clone()[this_sample_input_len:]
                     reasons_indices, decision_indices = hp.extract_indices_for_one_sample(reasons_tokens, decisions_tokens[sample_ix], target_ids.to('cpu'), self.logger)
-                    self.decision_indices_batch.append(decision_indices) if self.stage == 'uphold_stance' else self.decision_indices.extend(decision_indices)
-                    self.reasons_indices_batch.append(reasons_indices) if self.stage == 'uphold_stance' else self.reasons_indices.extend(reasons_indices)
+                    self.decision_indices_batch.append(decision_indices) if self.stage == 'uphold_stance' else self.decision_indices.append(decision_indices)
+                    self.reasons_indices_batch.append(reasons_indices) if self.stage == 'uphold_stance' else self.reasons_indices.append(reasons_indices)
 
                     # similarity-based relevance for decision and reasons
                     self.logger.debug(f"Computing relevance scores for sample {sample_ix}")
@@ -199,7 +199,7 @@ class ArCParser:
                     for reason_ix in range(len(reasons_tokens)):
                         rel = self.get_relevance_scores_for_sentence(torch.tensor(reasons_tokens[reason_ix]), reasons[sample_ix][reason_ix])
                         one_reason_relevance.append(rel)
-                    self.reasons_relevances_batch.append(one_reason_relevance) if self.stage == 'uphold_stance' else self.reasons_relevances.extend(one_reason_relevance)
+                    self.reasons_relevances_batch.append(one_reason_relevance) if self.stage == 'uphold_stance' else self.reasons_relevances.append(one_reason_relevance)
 
             self.add_batch() if self.stage == 'uphold_stance' else None # add rsults of each batch
                                                        
@@ -234,7 +234,7 @@ class ArCParser:
         directory_path = Path(PARSE_OUTPUT_PATH + "/" + self.model_name.split('/')[1]+'/'+self.data_name+'/'+self.stage+self.explicit_prompting)
         directory_path.mkdir(parents=True, exist_ok=True)
         file_path = directory_path / ("extracted_info.pkl") # TODO: `extracted_path.pkl` stores the results of all datapoints of a model-data combo in a single file - how to do this batches? or should we even do this differently?
-        self.logger.info(f"💾 Saving results to {file_path}")
+        self.logger.info(f"Saving results to {file_path}")
         with file_path.open("wb") as f:
             pickle.dump(results_dict, f)
         torch.cuda.empty_cache()
@@ -289,7 +289,7 @@ def do_sanity_checks(model_name, data_name, decisions, decision_sentences, reaso
     directory_path = Path(PARSE_OUTPUT_PATH + "/" + model_name.split('/')[1]+'/'+data_name+'/'+stage + explicit_prompting)
     directory_path.mkdir(parents=True, exist_ok=True)
     file_path = directory_path / ("sanity_checks.pkl") 
-    logger.info(f"💾 Saving results of sanity checks to {file_path}")
+    logger.info(f"Saving results of sanity checks to {file_path}")
     with file_path.open("wb") as f:
         pickle.dump(results, f)
     

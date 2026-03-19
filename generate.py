@@ -28,7 +28,7 @@ class Generator:
         
         # initialize tokenizer
         self.logger.info("Loading tokenizer...")
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, cache_dir=self.cache_dir)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, cache_dir=self.cache_dir, token=self.hf_token)
         if self.tokenizer.pad_token_id is None:
             # tokenizer.pad_token = tokenizer.eos_token  # use EOS token as PAD token
             self.logger.info("Adding pad token to tokenizer")
@@ -57,6 +57,8 @@ class Generator:
         self.generation_stage = args.generation_stage
         self.select_new_dataset_samples = True if args.select_new_dataset_samples == 'True' else False
         self.explicit_prompting = '_explicit' if args.explicit_prompting == 'True' and self.generation_stage != 'uphold_stance' else ''
+        self.toxicity_type = args.toxicity_type
+        self.hf_token = args.hf_token
         
     def set_required_seeds(self):
         self.logger.info(f"Setting random seeds to {self.seed_value} for reproducibility")
@@ -84,7 +86,7 @@ class Generator:
             instructions = json.load(file)
             self.logger.debug("Loaded prompt instructions")
 
-        data_loader = DataLoader(self.data_name, total_samples=self.data_size, batch_size=self.batch_size, random_state=self.seed_value, select_new_dataset_samples=self.select_new_dataset_samples)
+        data_loader = DataLoader(self.data_name, total_samples=self.data_size, batch_size=self.batch_size, random_state=self.seed_value, select_new_dataset_samples=self.select_new_dataset_samples, toxicity_type=self.toxicity_type)
         if self.generation_stage == 'justify': # justify generation
             self.logger.info("Loading data for justify generation")
             raw_data = data_loader.load_for_initial_generation(**data_args)
@@ -165,12 +167,13 @@ class Generator:
 
         # Load the model
         self.logger.info(f"Loading model: {self.model_name}")
-        if model_size[self.model_name] >= 13:
-            self.model = AutoModelForCausalLM.from_pretrained(self.model_name, torch_dtype=torch.float16, 
-                                                        cache_dir=self.cache_dir, device_map="auto")
-        else:
-            self.model = AutoModelForCausalLM.from_pretrained(self.model_name, torch_dtype=torch.float16, 
-                                                        cache_dir=self.cache_dir).cuda()
+        self.model = AutoModelForCausalLM.from_pretrained(
+            self.model_name,
+            torch_dtype=torch.float16,
+            cache_dir=self.cache_dir,
+            device_map="auto",
+            token=self.hf_token
+        )
             
         # Set the model to eval mode
         self.model.eval()
@@ -332,12 +335,21 @@ if __name__ == "__main__":
         "--explicit_prompting", type=str, required=False, default='True', help="prompt with explicit instructions"
     )
     parser.add_argument(
-        "--log_level", type=str, required=False, default='INFO', 
+        "--log_level", type=str, required=False, default='INFO',
         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
         help="Logging level"
     )
-  
-    
+    parser.add_argument(
+        "--toxicity_type", type=str, required=False, default='toxic',
+        choices=['toxic', 'nontoxic', 'both'],
+        help="Type of samples to process - toxic, nontoxic, or both"
+    )
+    parser.add_argument(
+        "--hf_token", type=str, required=False, default=None,
+        help="Hugging Face API token for accessing gated models"
+    )
+
+
     # Parse known and dataset-specific arguments
     args, extra_args = parser.parse_known_args()
     
