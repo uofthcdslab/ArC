@@ -42,7 +42,7 @@ View summary statistics for a specific model/dataset combination.
 
 **3. Explore Results (Jupyter Notebook):**
 
-See ``demo_arc_metrics.ipynb`` for an interactive demonstration of how to use the ArC classes and visualize metric outputs.
+See ``demo_arc_metrics.ipynb`` for a detailed demonstration of how to use the ArC classes and visualize metric outputs.
 
 
 Reproducing Full Pipeline:
