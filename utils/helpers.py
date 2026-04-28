@@ -374,6 +374,155 @@ class SentenceSimilarity:
         return with_input, between_reasons
     
     def predict(self, sentence_pairs):
-        return self.similarity_model.predict(sentence_pairs)        
+        return self.similarity_model.predict(sentence_pairs)
 
-    
+
+def get_prompt_and_output(model_name, data_name, stage, sample_idx, subsample_idx=None, explicit_prompting='_explicit'):
+    """
+    Extract prompt and output from raw generated data for a specific sample.
+
+    Args:
+        model_name: Full model name (e.g., 'meta-llama/Llama-3.2-3B-Instruct')
+        data_name: Dataset name (e.g., 'civil_comments')
+        stage: Generation stage ('justify', 'uphold_reasons_internal', 'uphold_reasons_external', 'uphold_stance')
+        sample_idx: Sample index to retrieve
+        subsample_idx: Subsample index (only for uphold_stance stage)
+        explicit_prompting: Prompting mode ('_explicit' or '')
+
+    Returns:
+        Tuple of (prompt, output) strings
+    """
+    import pickle
+    import json
+    from pathlib import Path
+
+    # Load prompt instructions
+    with open("utils/prompt_instructions.json", "r") as f:
+        instructions = json.load(f)
+
+    # Get the appropriate prompt from instructions
+    if stage == 'justify':
+        prompt_key = f"for_justify_generation{explicit_prompting}"
+    elif stage == 'uphold_reasons_internal':
+        prompt_key = f"for_uphold_reasons_internal_reliance{explicit_prompting}"
+    elif stage == 'uphold_reasons_external':
+        prompt_key = f"for_uphold_reasons_external_reliance{explicit_prompting}"
+    elif stage == 'uphold_stance':
+        prompt_key = "for_uphold_stance_reliance"
+        explicit_prompting = ''
+    else:
+        prompt_key = None
+
+    prompt = instructions.get(prompt_key, 'N/A') if prompt_key else 'N/A'
+
+    # Get output from generated data
+    short_model_name = model_name.split('/')[-1] if '/' in model_name else model_name
+    directory_path = Path('llm_generated_data/' + short_model_name + '/' + data_name + '/' + stage + explicit_prompting)
+
+    if not directory_path.exists():
+        return prompt, 'N/A'
+
+    pickle_files = sorted(directory_path.glob('*.pkl'), key=extract_first_number)
+    current_idx = 0
+    raw_text = None
+
+    for file in pickle_files:
+        if file.name == 'samples_1-0.pkl':
+            continue
+        with open(file, 'rb') as f:
+            data = pickle.load(f)
+
+        if len(data['generated_texts']) == 0:
+            continue
+
+        if stage == 'uphold_stance':
+            num_samples_in_file = len(data['generated_texts'])
+            if current_idx <= sample_idx < current_idx + num_samples_in_file:
+                local_idx = sample_idx - current_idx
+                if subsample_idx is not None and subsample_idx < len(data['generated_texts'][local_idx]):
+                    raw_text = data['generated_texts'][local_idx][subsample_idx]
+                else:
+                    raw_text = 'N/A'
+                break
+            current_idx += num_samples_in_file
+        else:
+            found = False
+            for batch_ix in range(len(data['generated_texts'])):
+                batch_size = len(data['generated_texts'][batch_ix])
+                if current_idx <= sample_idx < current_idx + batch_size:
+                    local_idx = sample_idx - current_idx
+                    raw_text = data['generated_texts'][batch_ix][local_idx]
+                    found = True
+                    break
+                current_idx += batch_size
+            if found:
+                break
+
+    if raw_text is None or raw_text == 'N/A':
+        return prompt, 'N/A'
+
+    # Extract output by splitting on 'assistant' and taking the part after it
+    parts = raw_text.split('assistant')
+    output = parts[1].strip() if len(parts) > 1 else raw_text
+
+    # Strip special tokens from output
+    tokens_to_strip = ['<|im_start|>', 'system', '<|im_sep|>', '<|im_end|>', 'user', 'assistant']
+    for token in tokens_to_strip:
+        output = output.replace(token, '')
+
+    # Clean up extra whitespace
+    output = ' '.join(output.split())
+
+    return prompt, output
+
+
+def normalize_result_keys(result):
+    """
+    Normalize old result keys to new naming convention.
+
+    Converts:
+    - 'initial_*' -> 'justify_*'
+    - 'internal_*' -> 'uphold_reasons_internal_*'
+    - 'external_*' -> 'uphold_reasons_external_*'
+    - 'individual_*' -> 'uphold_stance_*'
+
+    Args:
+        result: Dictionary with ArC results
+
+    Returns:
+        Dictionary with normalized keys
+    """
+    key_mapping = {
+        # Decision confidences
+        'initial_decision_confidence': 'justify_decision_confidence',
+        'internal_decision_confidence': 'uphold_reasons_internal_decision_confidence',
+        'external_decision_confidence': 'uphold_reasons_external_decision_confidence',
+        'individual_decision_confidence': 'uphold_stance_decision_confidence',
+
+        # Reasons
+        'initial_reasons': 'justify_reasons',
+        'internal_reasons': 'uphold_reasons_internal_reasons',
+        'external_reasons': 'uphold_reasons_external_reasons',
+        'individual_reasons': 'uphold_stance_reasons',
+
+        # Reason confidences
+        'initial_reasons_confidences': 'justify_reasons_confidences',
+        'internal_reasons_confidences': 'uphold_reasons_internal_reasons_confidences',
+        'external_reasons_confidences': 'uphold_reasons_external_reasons_confidences',
+        'individual_reasons_confidences': 'uphold_stance_reasons_confidences',
+
+        # Token mismatches
+        'initial_token_mismatch': 'justify_token_mismatch',
+        'internal_token_mismatch': 'uphold_reasons_internal_token_mismatch',
+        'external_token_mismatch': 'uphold_reasons_external_token_mismatch',
+        'individual_token_mismatch': 'uphold_stance_token_mismatch',
+    }
+
+    normalized = {}
+    for key, value in result.items():
+        # Map old keys to new keys
+        new_key = key_mapping.get(key, key)
+        normalized[new_key] = value
+
+    return normalized
+

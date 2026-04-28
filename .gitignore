@@ -1,6 +1,5 @@
 # arc-specific 
-llm_generated_data/
-parsed_data/
+
 run_scripts/
 slurm_logs/
 logs/

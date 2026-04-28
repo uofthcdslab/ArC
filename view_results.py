@@ -30,6 +30,9 @@ def load_arc_results(model_name, data_name, results_path="arc_results"):
         sample_idx = int(pkl_file.stem)
         with open(pkl_file, 'rb') as f:
             sample_result = pickle.load(f)
+            # Normalize old keys to new naming convention
+            from utils import helpers as hp
+            sample_result = hp.normalize_result_keys(sample_result)
             sample_result['sample_idx'] = sample_idx
             results.append(sample_result)
     

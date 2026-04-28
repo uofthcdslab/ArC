@@ -63,7 +63,16 @@ class ArCService:
     def get_tokenizer(self, model_name: str):
         """Get or load tokenizer for model"""
         if model_name not in self.tokenizers_dict:
-            self.tokenizers_dict[model_name] = AutoTokenizer.from_pretrained(model_name)
+            try:
+                # Try loading from local cache first (offline mode)
+                self.tokenizers_dict[model_name] = AutoTokenizer.from_pretrained(
+                    model_name,
+                    local_files_only=True
+                )
+            except Exception as e:
+                self.logger.warning(f"Could not load tokenizer from local cache: {e}")
+                # Try loading from HuggingFace with token if available
+                self.tokenizers_dict[model_name] = AutoTokenizer.from_pretrained(model_name)
         return self.tokenizers_dict[model_name]
     
     def get_new_decision(self, decision_sent: str) -> str:
