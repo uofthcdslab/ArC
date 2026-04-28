@@ -63,7 +63,16 @@ class ArCService:
     def get_tokenizer(self, model_name: str):
         """Get or load tokenizer for model"""
         if model_name not in self.tokenizers_dict:
-            self.tokenizers_dict[model_name] = AutoTokenizer.from_pretrained(model_name)
+            try:
+                # Try loading from local cache first (offline mode)
+                self.tokenizers_dict[model_name] = AutoTokenizer.from_pretrained(
+                    model_name,
+                    local_files_only=True
+                )
+            except Exception as e:
+                self.logger.warning(f"Could not load tokenizer from local cache: {e}")
+                # Try loading from HuggingFace with token if available
+                self.tokenizers_dict[model_name] = AutoTokenizer.from_pretrained(model_name)
         return self.tokenizers_dict[model_name]
     
     def get_new_decision(self, decision_sent: str) -> str:
@@ -107,18 +116,18 @@ class ArCService:
         tokenizer = self.get_tokenizer(model_name)
         result = {}
         
-        # ===== INITIAL STAGE: Relevance Dimension =====
-        result.update(self._compute_initial_stage(
+        # ===== JUSTIFY STAGE: Relevance Dimension =====
+        result.update(self._compute_justify_stage(
             sample_ix, tokenizer, output_tokens_dict, parsed_output_dict,
             model_name, data_name
         ))
-        
-        if len(result.get('initial_reasons', [])) == 0:
+
+        if len(result.get('justify_reasons', [])) == 0:
             self.logger.warning(f"No reasons found for sample {sample_ix}")
             return result
-        
+
         # ===== RELIANCE STAGES: Internal and External =====
-        for reliance_type, metric in [('internal', self.uii_metric), ('external', self.uei_metric)]:
+        for reliance_type, metric in [('uphold_reasons_internal', self.uii_metric), ('uphold_reasons_external', self.uei_metric)]:
             reliance_result = self._compute_reliance_stage(
                 sample_ix, tokenizer, reliance_type, metric,
                 output_tokens_dict, parsed_output_dict, result,
@@ -126,86 +135,86 @@ class ArCService:
             )
             result.update(reliance_result)
         
-        # ===== INDIVIDUAL STAGE =====
+        # ===== UPHOLD_STANCE STAGE =====
         if self.config.explicit_prompting != '':
-            individual_result = self._compute_individual_stage(
+            uphold_stance_result = self._compute_uphold_stance_stage(
                 sample_ix, tokenizer, output_tokens_dict, parsed_output_dict, result,
                 model_name, data_name
             )
-            result.update(individual_result)
+            result.update(uphold_stance_result)
         
         return result
     
-    def _compute_initial_stage(self, sample_ix: int, tokenizer, 
+    def _compute_justify_stage(self, sample_ix: int, tokenizer,
                                output_tokens_dict: Dict, parsed_output_dict: Dict,
                                model_name: str = None, data_name: str = None) -> Dict:
-        """Compute initial stage metrics (SoS, DiS)"""
+        """Compute justify stage metrics (SoS, DiS)"""
         result = {}
-        
+
         # Decision sentence confidence
-        decision_sent = parsed_output_dict['initial']['decision_sentences'][sample_ix]
+        decision_sent = parsed_output_dict['justify']['decision_sentences'][sample_ix]
         decision_sent_tokens = tokenizer(decision_sent, add_special_tokens=False)['input_ids']
         start_ix, end_ix = self.confidence_processor.get_indices(
             torch.tensor(decision_sent_tokens),
-            output_tokens_dict['initial'][sample_ix]
+            output_tokens_dict['justify'][sample_ix]
         )
-        out_tokens = output_tokens_dict['initial'][sample_ix][start_ix:end_ix].tolist()
+        out_tokens = output_tokens_dict['justify'][sample_ix][start_ix:end_ix].tolist()
         confidence, _ = self.confidence_processor.compute_confidence(
             start_ix, out_tokens, decision_sent_tokens,
-            parsed_output_dict['initial']['entropies_' + self.config.entropy_mode][sample_ix],
-            parsed_output_dict['initial']['decision_relevances'][sample_ix]
+            parsed_output_dict['justify']['entropies_' + self.config.entropy_mode][sample_ix],
+            parsed_output_dict['justify']['decision_relevances'][sample_ix]
         )
-        result['initial_decision_confidence'] = confidence
-        
-        # Extract initial reasons
-        initial_reasons = parsed_output_dict['initial']['reasons'][sample_ix]
-        result['initial_reasons'] = initial_reasons
-        result['initial_token_mismatch'] = []
-        result['initial_reasons_confidences'] = []
-        
-        reasons_tokens = tokenizer(initial_reasons, add_special_tokens=False)['input_ids']
-        initial_reasons_sims_input = parsed_output_dict['initial']['sims_input'][sample_ix]
-        initial_reasons_sims_reasons = parsed_output_dict['initial']['sims_reasons'][sample_ix]
-        
+        result['justify_decision_confidence'] = confidence
+
+        # Extract justify reasons
+        justify_reasons = parsed_output_dict['justify']['reasons'][sample_ix]
+        result['justify_reasons'] = justify_reasons
+        result['justify_token_mismatch'] = []
+        result['justify_reasons_confidences'] = []
+
+        reasons_tokens = tokenizer(justify_reasons, add_special_tokens=False)['input_ids']
+        justify_reasons_sims_input = parsed_output_dict['justify']['sims_input'][sample_ix]
+        justify_reasons_sims_reasons = parsed_output_dict['justify']['sims_reasons'][sample_ix]
+
         # Compute confidence for each reason
-        for reason_ix in range(len(initial_reasons)):
-            start_ix, end_ix = parsed_output_dict['initial']['reasons_indices'][sample_ix][reason_ix]
-            out_tokens = output_tokens_dict['initial'][sample_ix][start_ix:end_ix].tolist()
+        for reason_ix in range(len(justify_reasons)):
+            start_ix, end_ix = parsed_output_dict['justify']['reasons_indices'][sample_ix][reason_ix]
+            out_tokens = output_tokens_dict['justify'][sample_ix][start_ix:end_ix].tolist()
             confidence, encoding_issue = self.confidence_processor.compute_confidence(
                 start_ix, out_tokens, reasons_tokens[reason_ix],
-                parsed_output_dict['initial']['entropies_' + self.config.entropy_mode][sample_ix],
-                parsed_output_dict['initial']['reasons_relevances'][sample_ix][reason_ix]
+                parsed_output_dict['justify']['entropies_' + self.config.entropy_mode][sample_ix],
+                parsed_output_dict['justify']['reasons_relevances'][sample_ix][reason_ix]
             )
-            result['initial_reasons_confidences'].append(confidence)
+            result['justify_reasons_confidences'].append(confidence)
             if encoding_issue:
-                self.logger.warning(f"Encoding issue: {model_name}, {data_name}, initial, sample {sample_ix}, reason {reason_ix}")
-                result['initial_token_mismatch'].append(reason_ix)
-        
+                self.logger.warning(f"Encoding issue: {model_name}, {data_name}, justify, sample {sample_ix}, reason {reason_ix}")
+                result['justify_token_mismatch'].append(reason_ix)
+
         # Compute SoS
         sos_data = {
-            'initial_reasons_confidences': result['initial_reasons_confidences'],
-            'initial_reasons_sims_input': initial_reasons_sims_input
+            'justify_reasons_confidences': result['justify_reasons_confidences'],
+            'justify_reasons_sims_input': justify_reasons_sims_input
         }
         result['SoS'] = self.sos_metric.compute(sos_data)
-        
+
         # Compute DiS
         dis_data = {
-            'initial_reasons': initial_reasons,
-            'initial_reasons_confidences': result['initial_reasons_confidences'],
-            'initial_reasons_sims_reasons': initial_reasons_sims_reasons
+            'justify_reasons': justify_reasons,
+            'justify_reasons_confidences': result['justify_reasons_confidences'],
+            'justify_reasons_sims_reasons': justify_reasons_sims_reasons
         }
         dis_result = self.dis_metric.compute(dis_data)
         result.update(dis_result)
-        
+
         return result
     
     def _compute_reliance_stage(self, sample_ix: int, tokenizer, reliance_type: str,
-                               metric, output_tokens_dict: Dict, 
+                               metric, output_tokens_dict: Dict,
                                parsed_output_dict: Dict, initial_result: Dict,
                                model_name: str = None, data_name: str = None) -> Dict:
         """Compute reliance stage metrics (UII or UEI)"""
         result = {}
-        
+
         # Decision sentence confidence
         decision_sent = parsed_output_dict[reliance_type]['decision_sentences'][sample_ix]
         decision_sent_tokens = tokenizer(decision_sent, add_special_tokens=False)['input_ids']
@@ -220,18 +229,18 @@ class ArCService:
             parsed_output_dict[reliance_type]['decision_relevances'][sample_ix]
         )
         result[f'{reliance_type}_decision_confidence'] = confidence
-        
+
         # Extract reliance reasons
         reliance_reasons = parsed_output_dict[reliance_type]['reasons'][sample_ix]
-        
+
         if len(reliance_reasons) == 0:
             self.logger.warning(f"No reasons found for {reliance_type} stage, sample {sample_ix}")
             return result
-        
+
         result[f'{reliance_type}_token_mismatch'] = []
         result[f'{reliance_type}_reasons_confidences'] = []
         reasons_tokens = tokenizer(reliance_reasons, add_special_tokens=False)['input_ids']
-        
+
         # Compute confidence for each reason
         for reason_ix in range(len(reliance_reasons)):
             start_ix, end_ix = parsed_output_dict[reliance_type]['reasons_indices'][sample_ix][reason_ix]
@@ -245,106 +254,106 @@ class ArCService:
             if encoding_issue:
                 self.logger.warning(f"Encoding issue: {model_name}, {data_name}, {reliance_type}, sample {sample_ix}, reason {reason_ix}")
                 result[f'{reliance_type}_token_mismatch'].append(reason_ix)
-        
+
         # Compute metric (UII or UEI)
         metric_data = {
             f'{reliance_type}_reasons': reliance_reasons,
             f'{reliance_type}_reasons_confidences': result[f'{reliance_type}_reasons_confidences'],
-            'initial_reasons': initial_result['initial_reasons'],
-            'initial_reasons_confidences': initial_result['initial_reasons_confidences']
+            'justify_reasons': initial_result['justify_reasons'],
+            'justify_reasons_confidences': initial_result['justify_reasons_confidences']
         }
         metric_result = metric.compute(metric_data)
         result[metric.get_name()] = metric_result
-        
+
         return result
     
-    def _compute_individual_stage(self, sample_ix: int, tokenizer,
+    def _compute_uphold_stance_stage(self, sample_ix: int, tokenizer,
                                  output_tokens_dict: Dict, parsed_output_dict: Dict,
                                  initial_result: Dict,
                                  model_name: str = None, data_name: str = None) -> Dict:
-        """Compute individual stage metrics (RS or RN)"""
+        """Compute uphold_stance stage metrics (RS or RN)"""
         result = {}
-        
-        # Check if individual data exists
-        if sample_ix >= len(output_tokens_dict['individual']):
-            self.logger.warning(f"No individual data for sample {sample_ix}")
+
+        # Check if uphold_stance data exists
+        if sample_ix >= len(output_tokens_dict['uphold_stance']):
+            self.logger.warning(f"No uphold_stance data for sample {sample_ix}")
             return result
-        
-        if len(output_tokens_dict['individual'][sample_ix]) == 0:
-            self.logger.warning(f"Empty individual data for sample {sample_ix}")
+
+        if len(output_tokens_dict['uphold_stance'][sample_ix]) == 0:
+            self.logger.warning(f"Empty uphold_stance data for sample {sample_ix}")
             return result
-        
-        if parsed_output_dict['initial']['decisions'][sample_ix] == 'NO OR UNCLEAR DECISION':
+
+        if parsed_output_dict['justify']['decisions'][sample_ix] == 'NO OR UNCLEAR DECISION':
             self.logger.warning(f"No clear decision for sample {sample_ix}")
             return result
-        
-        # Determine metric type based on initial decision
-        if parsed_output_dict['initial']['decisions'][sample_ix] == 'non-toxic':
+
+        # Determine metric type based on justify decision
+        if parsed_output_dict['justify']['decisions'][sample_ix] == 'non-toxic':
             metric = self.rn_metric
         else:
             metric = self.rs_metric
-        
-        result['individual_token_mismatch'] = {}
-        result['individual_reasons_confidences'] = {}
-        result['individual_decision_confidence'] = {}
-        reliance_reasons = parsed_output_dict['individual']['reasons'][sample_ix]
+
+        result['uphold_stance_token_mismatch'] = {}
+        result['uphold_stance_reasons_confidences'] = {}
+        result['uphold_stance_decision_confidence'] = {}
+        reliance_reasons = parsed_output_dict['uphold_stance']['reasons'][sample_ix]
         new_decisions = []
-        
+
         # Process each subsample
-        for subsample_ix in range(len(output_tokens_dict['individual'][sample_ix])):
+        for subsample_ix in range(len(output_tokens_dict['uphold_stance'][sample_ix])):
             # Get new decision
-            decision_sent = parsed_output_dict['individual']['decision_sentences'][sample_ix][subsample_ix]
+            decision_sent = parsed_output_dict['uphold_stance']['decision_sentences'][sample_ix][subsample_ix]
             new_decision = self.get_new_decision(decision_sent)
             new_decisions.append(new_decision)
-            
+
             # Decision confidence
             decision_sent_tokens = tokenizer(decision_sent, add_special_tokens=False)['input_ids']
             start_ix, end_ix = self.confidence_processor.get_indices(
                 torch.tensor(decision_sent_tokens),
-                output_tokens_dict['individual'][sample_ix][subsample_ix]
+                output_tokens_dict['uphold_stance'][sample_ix][subsample_ix]
             )
-            out_tokens = output_tokens_dict['individual'][sample_ix][subsample_ix][start_ix:end_ix].tolist()
+            out_tokens = output_tokens_dict['uphold_stance'][sample_ix][subsample_ix][start_ix:end_ix].tolist()
             confidence, _ = self.confidence_processor.compute_confidence(
                 start_ix, out_tokens, decision_sent_tokens,
-                parsed_output_dict['individual']['entropies_' + self.config.entropy_mode][sample_ix][subsample_ix],
-                parsed_output_dict['individual']['decision_relevances'][sample_ix][subsample_ix]
+                parsed_output_dict['uphold_stance']['entropies_' + self.config.entropy_mode][sample_ix][subsample_ix],
+                parsed_output_dict['uphold_stance']['decision_relevances'][sample_ix][subsample_ix]
             )
-            result['individual_decision_confidence'][subsample_ix] = confidence
-            
+            result['uphold_stance_decision_confidence'][subsample_ix] = confidence
+
             # Reason confidences
             if len(reliance_reasons[subsample_ix]) == 0:
-                result['individual_reasons_confidences'][subsample_ix] = []
-                result['individual_token_mismatch'][subsample_ix] = []
+                result['uphold_stance_reasons_confidences'][subsample_ix] = []
+                result['uphold_stance_token_mismatch'][subsample_ix] = []
                 continue
-            
-            result['individual_token_mismatch'][subsample_ix] = []
-            result['individual_reasons_confidences'][subsample_ix] = []
+
+            result['uphold_stance_token_mismatch'][subsample_ix] = []
+            result['uphold_stance_reasons_confidences'][subsample_ix] = []
             reasons_tokens = tokenizer(reliance_reasons[subsample_ix], add_special_tokens=False)['input_ids']
-            
+
             for reason_ix in range(len(reliance_reasons[subsample_ix])):
-                start_ix, end_ix = parsed_output_dict['individual']['reasons_indices'][sample_ix][subsample_ix][reason_ix]
-                out_tokens = output_tokens_dict['individual'][sample_ix][subsample_ix][start_ix:end_ix].tolist()
+                start_ix, end_ix = parsed_output_dict['uphold_stance']['reasons_indices'][sample_ix][subsample_ix][reason_ix]
+                out_tokens = output_tokens_dict['uphold_stance'][sample_ix][subsample_ix][start_ix:end_ix].tolist()
                 confidence, encoding_issue = self.confidence_processor.compute_confidence(
                     start_ix, out_tokens, reasons_tokens[reason_ix],
-                    parsed_output_dict['individual']['entropies_' + self.config.entropy_mode][sample_ix][subsample_ix],
-                    parsed_output_dict['individual']['reasons_relevances'][sample_ix][subsample_ix][reason_ix]
+                    parsed_output_dict['uphold_stance']['entropies_' + self.config.entropy_mode][sample_ix][subsample_ix],
+                    parsed_output_dict['uphold_stance']['reasons_relevances'][sample_ix][subsample_ix][reason_ix]
                 )
-                result['individual_reasons_confidences'][subsample_ix].append(confidence)
+                result['uphold_stance_reasons_confidences'][subsample_ix].append(confidence)
                 if encoding_issue:
-                    self.logger.warning(f"Encoding issue: {model_name}, {data_name}, individual, sample {sample_ix}, subsample {subsample_ix}, reason {reason_ix}")
-                    result['individual_token_mismatch'][subsample_ix].append(reason_ix)
-        
+                    self.logger.warning(f"Encoding issue: {model_name}, {data_name}, uphold_stance, sample {sample_ix}, subsample {subsample_ix}, reason {reason_ix}")
+                    result['uphold_stance_token_mismatch'][subsample_ix].append(reason_ix)
+
         # Compute RS or RN metric
         metric_data = {
-            'individual_reasons': reliance_reasons,
-            'individual_reasons_confidences': result['individual_reasons_confidences'],
-            'individual_decision_confidence': result['individual_decision_confidence'],
+            'uphold_stance_reasons': reliance_reasons,
+            'uphold_stance_reasons_confidences': result['uphold_stance_reasons_confidences'],
+            'uphold_stance_decision_confidence': result['uphold_stance_decision_confidence'],
             'new_decisions': new_decisions,
-            'initial_reasons': initial_result['initial_reasons'],
-            'initial_reasons_confidences': initial_result['initial_reasons_confidences']
+            'justify_reasons': initial_result['justify_reasons'],
+            'justify_reasons_confidences': initial_result['justify_reasons_confidences']
         }
         result[metric.get_name()] = metric.compute(metric_data)
-        
+
         return result
     
     # ===== UNUSED METHODS (Kept for reference, commented out) =====

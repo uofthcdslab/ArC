@@ -1,6 +1,5 @@
 # arc-specific 
-llm_generated_data/
-parsed_data/
+
 run_scripts/
 slurm_logs/
 logs/
@@ -88,7 +87,7 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
-
+.claude/
 # IPython
 profile_default/
 ipython_config.py

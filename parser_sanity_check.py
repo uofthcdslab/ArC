@@ -38,8 +38,8 @@ def main(args_main):
 if __name__ == '__main__':
     # set up argument parser
     parser = argparse.ArgumentParser(description='Do sanity checks')
-    parser.add_argument('--stage', type=str, default='initial',
-                      help='Stage: initial, internal, or external')
+    parser.add_argument('--stage', type=str, default='justify',
+                      help='Stage: justify, uphold_reasons_internal, or uphold_reasons_external')
     
     args_main = parser.parse_args()
     main(args_main)
