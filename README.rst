@@ -8,7 +8,7 @@ ArC: Argument-Based Consistency in Toxicity Explanations of LLMs
 
 **Context:** The discourse around toxicity and LLMs in NLP largely revolves around detection tasks. This work shifts the focus to evaluating LLMs' *reasoning* about toxicity—from their explanations that justify a stance—to enhance their trustworthiness in downstream tasks. Despite extensive research on explainability, it is not straightforward to adopt existing methods to evaluate free-form toxicity explanation due to their over-reliance on input text perturbations, among other challenges. 
 
-**Approach:** To account for these, in our recent `paper <https://arxiv.org/pdf/2506.19113>`_ **[To appear in EACL'26]**, we propose a novel, theoretically-grounded multi-dimensional criterion, **Argument-based Consistency** (ArC), that measures the extent to which LLMs' free-form toxicity explanations reflect an ideal and logical argumentation process. We develop six metrics, based on uncertainty quantification, to provide a *diagnostic framework* for assessing various forms of consistency, capturing the interrelatedness of different dimensions in ideal toxicity reasoning.
+**Approach:** To account for these, in our recent `EACL 2026 paper <https://aclanthology.org/2026.findings-eacl.310.pdf>`_, we propose a novel, theoretically-grounded multi-dimensional criterion, **Argument-based Consistency** (ArC), that measures the extent to which LLMs' free-form toxicity explanations reflect an ideal and logical argumentation process. We develop six metrics, based on uncertainty quantification, to provide a *diagnostic framework* for assessing various forms of consistency, capturing the interrelatedness of different dimensions in ideal toxicity reasoning.
 
 **Outcome:** Our results show that while LLMs generate plausible explanations to simple prompts, their reasoning about toxicity breaks down when prompted about the nuanced relations between the complete set of reasons, the individual reasons, and their toxicity stances, resulting in inconsistent and irrelevant responses. In particular, the models we studied generally perform poorly in upholding their own stated
 reasons, and fail to capture that for toxic stances, each individual reason is logically sufficient (as any safety violation indicates toxicity), while for nontoxicity, all stated reasons are logically necessary (as all must hold to establish safety).
@@ -42,7 +42,7 @@ View summary statistics for a specific model/dataset combination.
 
 **3. Explore Results (Jupyter Notebook):**
 
-See `demo_arc_metrics.ipynb <https://github.com/uofthcdslab/ArC/blob/main/demo_arc_metrics.ipynb>`_ for an interactive demonstration of how to use the ArC classes and visualize metric outputs.
+See ``demo_arc_metrics.ipynb`` for a detailed demonstration of how to use the ArC classes and visualize metric outputs.
 
 
 Reproducing Full Pipeline:
@@ -67,15 +67,15 @@ Reproducing Full Pipeline:
 
 In the paper, we describe a three-stage pipeline to compute **ArC** metrics. The pipeline consists of:
 
-1. Stage **JUSTIFY** where LLMs generate explanations for their toxicity decisions (denoted by ``stage="justify"``).
-2. Stage **UPHOLD-REASONS** where LLMs generate post-hoc explanations to assess the sufficiency of reasons provided in the **JUSTIFY** stage (denoted by ``stage="uphold_reasons_internal"`` or ``stage="uphold_reasons_external"``).
-3. Stage **UPHOLD-STANCE** where LLMs generate post-hoc explanations to assess the sufficiency and necessity of individual reasons of **JUSTIFY** stage (denoted by ``stage="uphold_stance"``).
+1. Stage **JUSTIFY** where LLMs generate explanations for their toxicity decisions (denoted by ``stage="initial"``).
+2. Stage **UPHOLD-REASONS** where LLMs generate post-hoc explanations to assess the sufficiency of reasons provided in the **JUSTIFY** stage (denoted by ``stage="internal"`` or ``stage="external"``).
+3. Stage **UPHOLD-STACE** where LLMs generate post-hoc explanations to assess the sufficiency and necessity of individual reasons of **JUSTIFY** stage (denoted by ``stage="individual"``).
 
-To implement this, repeat the following steps with each of the four values for the parameter ``stage``: ``justify``, ``uphold_reasons_internal``, ``uphold_reasons_external``, and ``uphold_stance`` (only the ``justify`` stage has to be run first; the rest can be run in any order):
+To implement this, repeat the following steps with each of the four values for the parameter ``stage``: ``initial``, ``internal``, ``external``, and ``individual`` (only the ``initial`` stage has to be run first; the rest can be run in any order):
 
-1. Run `generate.py <https://github.com/uofthcdslab/ArC/blob/main/generate.py>`_ with ``--generation_stage=justify/uphold_reasons_internal/uphold_reasons_external/uphold_stance`` and other optional changes to the generation hyperparameters.
-2. LLM outputs (tokens, token entropies, and texts) will be generated and stored in ``llm_generated_data/<model_name>/<data_name>/<stage>``.
-3. Run `parse.py <https://github.com/uofthcdslab/ArC/blob/main/parse.py>`_ with ``stage=justify/uphold_reasons_internal/uphold_reasons_external/uphold_stance`` and other optional parameters to extract LLM decisions, reasons, and other relevant information for computing ArC.
+1. Run `generate.py <https://github.com/uofthcdslab/ArC/blob/main/generate.py>`_ with ``--generation_stage=initial/internal/external/individual`` and other optional changes to the generation hyperparameters. 
+2. LLM outputs (tokens, token entropies, and texts) will be generated and stored in ``llm_generated_data/<model_name>/<data_name>/<stage>``. 
+3. Run `parse.py <https://github.com/uofthcdslab/ArC/blob/main/parse.py>`_ with ``stage=initial/internal/external/individual`` and other optional parameters to extract LLM decisions, reasons, and other relevant information for computing ArC.
 4. The parsed outputs will be stored in ``parsed_data/<model_name>/<data_name>/<stage>``.
 
 
